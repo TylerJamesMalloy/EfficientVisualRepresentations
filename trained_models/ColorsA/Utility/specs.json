@@ -1,0 +1,7 @@
+{
+    "betaH_B": 1,
+    "rec_dist": "gaussian",
+    "reg_anneal": 10000,
+    "upsilon": 1,
+    "util_loss": "mse"
+}

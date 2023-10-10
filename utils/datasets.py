@@ -23,6 +23,8 @@ DATASETS_DICT = {"mnist": "MNIST",
                  "dsprites": "DSprites",
                  "celeba": "CelebA",
                  "chairs": "Chairs",
+                 "colorsa": "ColorsA",
+                 "colorsb": "ColorsB",
                  "niv": "Niv",
                  "marbles": "Marbles"}
 DATASETS = list(DATASETS_DICT.keys())
@@ -293,6 +295,42 @@ class CelebA(DisentangledDataset):
         # dataloaders requires so
         return img, 0
 
+class ColorsA(DisentangledDataset):
+    """
+    Example stimuli set for Psychological Review submission
+    """
+    urls = {"train": "None"}
+    files = {"train": "None"}
+    img_size = (3, 64, 64)
+    background_color = COLOUR_WHITE
+
+    def __init__(self, root=os.path.join(DIR, '../data/colors/'), **kwargs):
+        super().__init__(root, [transforms.ToTensor()], **kwargs)
+        self.train_data = "./data/colorsa/stimuli.npy"
+        self.imgs = np.load(self.train_data, allow_pickle=True)
+
+    def download(self):
+        return
+
+    def __getitem__(self, idx):
+        """Get the image of `idx`
+
+        Return
+        ------
+        sample : torch.Tensor
+            Tensor in [0.,1.] of shape `img_size`.
+
+        placeholder :
+            Placeholder value as their are no targets.
+        """
+        img = self.imgs[idx]
+
+        # change to a tensor
+        img = self.transforms(img)
+
+        # no label so return 0 (note that can't return None because)
+        # dataloaders requires so
+        return img
 
 class Marbles(DisentangledDataset):
     """
@@ -304,9 +342,8 @@ class Marbles(DisentangledDataset):
     background_color = COLOUR_WHITE
 
     def __init__(self, root=os.path.join(DIR, '../data/marbles/'), **kwargs):
-        super().__init__(root, [transforms.ToTensor()], **kwargs)
-        self.root = root 
-        self.train_data = "./data/marbles/source/" + self.root + "/stimuli.npy"
+        super().__init__(root, [transforms.ToTensor()], **kwargs) 
+        self.train_data = root + "/stimuli.npy"
         self.imgs = np.load(self.train_data, allow_pickle=True)
 
     def download(self):
