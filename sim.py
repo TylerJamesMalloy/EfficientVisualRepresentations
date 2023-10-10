@@ -50,7 +50,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--rec_dist', type=str, default='gaussian')
 parser.add_argument('--reg_anneal', type=int, default=10000)
 parser.add_argument('--util_loss', type=str, default="mse")
-parser.add_argument('--betaH_B', type=int, default=1)
+parser.add_argument('--betaH_B', type=int, default=10)
 parser.add_argument('--upsilon', type=int, default=1)
 args = parser.parse_args()
 
@@ -89,7 +89,8 @@ trainer = Trainer(model, optimizer, loss_f,
                     is_progress_bar=True)
 
 
-utilities = np.zeros_like([1,1,1])
+#utilities = np.zeros_like([1,1,1])
+utilities = np.array([.333,.333,.333])
 utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
 trainer(train_loader,
@@ -117,8 +118,8 @@ for data in iter(train_loader):
 # SAVE MODEL AND EXPERIMENT INFORMATION
 save_model(trainer.model, EXP_DIR, metadata=vars(args))
 
-utilities = np.zeros_like([1,1,1])
-utilities[0] = 1e6
+#utilities = np.zeros_like([1,1,1])
+utilities = np.array([0,0,1])
 utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
 EXP_DIR = "./trained_models/ColorsA/Utility/"
@@ -148,4 +149,6 @@ for data in iter(train_loader):
 
         plt.imshow(stim_1_recon.permute(1, 2, 0).detach().numpy())
         #plt.show()
+        print("stim: ", str(idx))
+        print(stim_1_pred_util)
         plt.savefig('./trained_models/ColorsA/Utility/recon/stim_' + str(idx) + '.png')

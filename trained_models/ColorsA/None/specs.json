@@ -1,5 +1,5 @@
 {
-    "betaH_B": 1,
+    "betaH_B": 10,
     "rec_dist": "gaussian",
     "reg_anneal": 10000,
     "upsilon": 1,
