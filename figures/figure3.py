@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(nrows=1, ncols=2)
 
-participantAversion = pd.read_pickle(".\participantAversion.pkl")
+participantAversion = pd.read_pickle(".\participantAversion_e1.pkl")
+participantAversion = participantAversion.reset_index()
 sns.histplot(participantAversion, x="Risk Aversion Coefficient", ax=axes[1])
+plt.show()
 
+assert(False)
 axes[1].set_ylabel("Participant Count")
 axes[1].set_xlabel("Risk Aversion Coefficient")
 axes[1].set_title("Participant Risk Aversion Coefficients")
