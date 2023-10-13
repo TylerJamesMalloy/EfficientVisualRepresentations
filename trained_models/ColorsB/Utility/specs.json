@@ -1,6 +1,6 @@
 {
     "batch_size": 64,
-    "betaH_B": 50,
+    "betaH_B": 1,
     "dataset": "ColorsA",
     "img_size": [
         3,
@@ -11,7 +11,7 @@
     "model_type": "Burgess",
     "rec_dist": "gaussian",
     "reg_anneal": 10000,
-    "upsilon": 1,
+    "upsilon": 50,
     "util_loss": "mse",
     "utility_type": "Malloy"
 }
