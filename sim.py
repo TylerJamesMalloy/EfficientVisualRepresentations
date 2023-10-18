@@ -47,10 +47,10 @@ LOG_LEVELS = list(logging._levelToName.values())
 log_level = "info"
 NUM_EPOCHS = 100
 TRAINA = 0 # static utility
-TRAINB = 1 # variable utility
+TRAINB = 0 # variable utility
 
 TESTA = 0 # static utility
-TESTB = 1 # variable utility
+TESTB = 0 # variable utility
 
 PLOTA = 0
 PLOTB = 1
@@ -449,17 +449,77 @@ from scipy.stats import norm
 if(PLOTB):
        print("in plot b")
 
-       # define data values
-       
-       # Risk averse
-       x = np.array([0.1, 0.1, 0.5])  # X-axis points 
-       y = np.array([0.4482, 0.4573, 0.7023])  # X-axis points  # Y-axis points 
-       plt.plot(x, y)  # Plot the chart
+       fig, axes = plt.subplots(nrows=2, ncols=2, sharey=True)
+       # High Beta Value
+       mean_1 = np.array([0.6, 0.6, 0.6])
+       std_1 = np.array([.01, .01, .01])
 
-       # Risk seeking
-       y = np.array([0.5918, 0.5917, 0.4304])  # X-axis points  # Y-axis points 
-       plt.show()  # display
+       # Low Beta Value
+       mean_2 = np.array([0.6, 0.6, 0.6])
+       std_2 = np.array([.01, .01, .01])
        
+       x = [0.1, 0.1, 0.5]
+       axes[0,1].plot(x, mean_1, 'b-', label=r'$\beta = 1$')
+       axes[0,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[0,1].plot(x, mean_2, 'r-', label=r'$\beta = 100$')
+       axes[0,1].fill_between(x, mean_2 - std_2, mean_2 + std_2, color='r', alpha=0.2)
+       axes[0,1].legend()
+
+       axes[0,1].set_title(r'$\beta$ ' + " Variational Auto Encoder")
+
+       # High Beta Value
+       mean_1 = np.array([0.4482, 0.4573, 0.7023])
+       std_1 = np.array([.01, .01, .01])
+
+       # Low Beta Value
+       mean_2 = np.array([0.5918, 0.5917, 0.4304])
+       std_2 = np.array([.01, .01, .01])
+       
+       x = [0.1, 0.1, 0.5]
+       axes[0,0].plot(x, mean_1, 'b-', label=r'$\beta = 1$')
+       axes[0,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[0,0].plot(x, mean_2, 'r-', label=r'$\beta = 100$')
+       axes[0,0].fill_between(x, mean_2 - std_2, mean_2 + std_2, color='r', alpha=0.2)
+       axes[0,0].legend()
+
+       axes[0,0].set_ylabel("Marble Utility " + r'$u(x)$')
+
+       axes[0,0].set_title("Utility " + r'$\beta$ ' + " Variational Auto Encoder")
+
+       mean_1 = np.array([0.6, 0.6, 0.6])
+       std_1 = np.array([.01, .01, .01])
+
+       # Low Beta Value
+       mean_2 = np.array([0.6, 0.6, 0.6])
+       std_2 = np.array([.01, .01, .01])
+       
+       x = [0.1, 0.1, 0.5]
+       axes[1,0].plot(x, mean_1, 'b-', label="VAE")
+       axes[1,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[1,0].set_title("Utility Variational Auto Encoder")
+       axes[1,0].legend()
+
+       axes[1,0].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+       axes[1,0].set_ylabel("Marble Utility " + r'$u(x)$')
+
+       mean_1 = np.array([0.6, 0.6, 0.6])
+       std_1 = np.array([.01, .01, .01])
+
+       # Low Beta Value
+       mean_2 = np.array([0.6, 0.6, 0.6])
+       std_2 = np.array([.01, .01, .01])
+       
+       x = [0.1, 0.1, 0.5]
+       axes[1,1].plot(x, mean_1, 'b-', label="VAE")
+       axes[1,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[1,1].legend()
+
+       axes[1,1].set_title("Variational Auto Encoder")
+       axes[1,1].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+
+       plt.suptitle("Utility Prediction Error by Marble Utility")
+        
+       plt.show()
 
 if(PLOTA):
         #plt.rcParams['text.usetex'] = True
@@ -500,7 +560,7 @@ if(PLOTA):
         KLD = r'$\beta D_{KL} (q_{\phi} (z│x)|p(z)) = 800.09$'
         axes[0].text(0.05, 0.625, KLD, transform=axes[0].transAxes, fontsize=12)
 
-        Util_error = r'$υ(U(z)-u(x))^2 = 3.82 \times 10^{-3}$'
+        Util_error = r'$\upsilon(U(z)-u(x))^2 = 3.82 \times 10^{-3}$'
         axes[0].text(0.05, 0.55, Util_error, transform=axes[0].transAxes, fontsize=12)
         
         dists = [[-2.1258, 0.2192586] , [-1.4379, 0.2192586], [-0.1543, 0.09355588 ]]

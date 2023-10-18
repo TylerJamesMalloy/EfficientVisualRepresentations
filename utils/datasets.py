@@ -50,7 +50,7 @@ def get_background(dataset):
     return get_dataset(dataset).background_color
 
 def get_dataloaders(dataset, root=None, shuffle=False, pin_memory=True,
-                    batch_size=16, set=None, logger=logging.getLogger(__name__), **kwargs):
+                    batch_size=64, set=None, logger=logging.getLogger(__name__), **kwargs):
     """A generic data loader
 
     Parameters
@@ -66,6 +66,7 @@ def get_dataloaders(dataset, root=None, shuffle=False, pin_memory=True,
     """
     pin_memory = pin_memory and torch.cuda.is_available  # only pin if GPU available
     Dataset = get_dataset(dataset)
+    root = "./data/marbles/"
     if(set is not None): 
         root = root + "/set" + str(set)  if root is not None else "/set" + str(set)
     dataset = Dataset(logger=logger) if root is None else Dataset(root=root, logger=logger)

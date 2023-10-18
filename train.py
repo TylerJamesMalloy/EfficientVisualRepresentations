@@ -39,7 +39,7 @@ from os.path import isfile, join
 import ast 
 
 CONFIG_FILE = "hyperparam.ini"
-RES_DIR = "results"
+RES_DIR = "trained_models/"
 LOG_LEVELS = list(logging._levelToName.values())
 ADDITIONAL_EXP = ['custom', "debug", "best_celeba", "best_dsprites"]
 EXPERIMENTS = ADDITIONAL_EXP + ["{}_{}".format(loss, data)
@@ -201,7 +201,7 @@ def parse_arguments(args_to_parse):
 
     return args
 
-all_marble_colors = pd.read_csv("./data/marbles/source/colors.csv")
+all_marble_colors = pd.read_csv("./data/marbles/colors.csv")
 all_marble_colors = all_marble_colors['colors']
 
 stimuli_mean_utilities = []
@@ -233,6 +233,10 @@ def softmax(utilities, inv_temp=10):
     return soft_percentages
 
 
+LOW_BETA = 4   # Negative risk aversion coef
+MED_BETA = 10  # Neutral risk aversion coef
+HGH_BETA = 100 # Positive risk aversion coef
+
 def main(args):
     device = get_device(is_gpu=not args.no_cuda)
     exp_dir = os.path.join(RES_DIR, args.name)
@@ -246,12 +250,18 @@ def main(args):
     stream.setFormatter(formatter)
     logger.addHandler(stream)
 
-    all_participant_data = [f for f in listdir('./data/marbles/decisions/data/') if isfile(join('./data/marbles/decisions/data/', f))]
+    all_participant_data = [f for f in listdir('./data/participantResponses/') if isfile(join('./data/participantResponses', f))]
+    participant_aversion_e1 = pd.read_pickle("./figures/participantAversion_e1.pkl")
+    participant_aversion_e2 = pd.read_pickle("./figures/participantAversion_e2.pkl")
+    pa = pd.concat([participant_aversion_e1, participant_aversion_e2])
+
     args.img_size = get_img_size(args.dataset)
 
     models = []
     if(not args.is_eval_only):
         for stimuli_set in [0,1,2,3,4,5]:
+
+            print(exp_dir)
 
             if(not os.path.exists(exp_dir + "/set" + str(stimuli_set))):
                 os.makedirs(exp_dir + "/set" + str(stimuli_set))
@@ -292,7 +302,7 @@ def main(args):
             save_model(trainer.model, exp_dir + "/set" + str(stimuli_set), metadata=vars(args))
     
     
-    """models = []
+    models = []
     for stimuli_set in [0,1,2,3,4,5]:
         model = load_model(exp_dir + "/set" + str(stimuli_set))
         model.to(device)
@@ -312,7 +322,7 @@ def main(args):
                             **vars(args))
         trainer = Trainer(model, optimizer, loss_f,
                             device=device,
-                            logger=logger,
+                            logger=None,
                             save_dir=exp_dir + "/set" + str(stimuli_set),
                             is_progress_bar=not args.no_progress_bar)
         
@@ -326,19 +336,36 @@ def main(args):
                 checkpoint_every=args.checkpoint_every,)
 
         models.append(model)
-    
-    participant_risk_aversions = risk_avers_parameters
+
     predictive_accuracy = pd.DataFrame()
     
     for participant_idx, participant_data in enumerate(all_participant_data):
+        ubvae_participant_accuracies = []
         bvae_participant_accuracies = []
+        vae_participant_accuracies = []
+        uvae_participant_accuracies = []
+
         meu_participant_accuracies = []
         cpt_participant_accuracies = []
+
+        id = participant_data.split("_")[0]
+
+        np.set_printoptions(threshold=np.inf)
+        aversion = pa.loc[pa['Id'] == int(id)]
+
+        ubvae_model = load_model()
+        bvae_model = load_model()
+        uvae_model = load_model()
+        vae_model = load_model()
+
+        assert(False)
+
         
-        inv_temp = inv_temp_parameters[participant_idx]
+        #inv_temp = inv_temp_parameters[participant_idx]
+        inv_temp = 10
 
         #if(participant_idx == 0): continue
-        data = pd.read_csv(join('./data/marbles/decisions/data/', participant_data))  
+        data = pd.read_csv(join('./data/participantResponses/', participant_data))  
         marble_set = int(data['marble_set'][0])
 
         participant_model = models[marble_set]
@@ -454,7 +481,6 @@ def main(args):
     plt.show()
 
     print(predictive_accuracy)
-    """
 
     return 
 
