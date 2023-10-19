@@ -8,7 +8,21 @@ from PIL import Image
 from scipy.stats import f_oneway
 from skimage.measure import shannon_entropy
 
+fig, axes = plt.subplots(nrows=1, ncols=2)
+splitAversion = pd.read_pickle(".\splitAversion_e1.pkl")
+splitAversion = splitAversion.reset_index()
 
+
+
+
+
+splitAversion["Log Likelihood"] = -1 * splitAversion["Log Likelihood"]
+sns.barplot(splitAversion, x="Model", y="Log Likelihood", hue="Split", errorbar=('ci', 90), ax=axes[0])
+
+# Statistic test to compare the coefficients across participants. 
+plt.show()
+
+assert(False)
 fig, axes = plt.subplots(nrows=2, ncols=1)
 
 learningAversion = pd.read_pickle(".\participantAversion_e2.pkl")

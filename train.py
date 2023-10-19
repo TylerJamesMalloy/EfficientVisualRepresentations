@@ -340,11 +340,19 @@ def main(args):
     predictive_accuracy = pd.DataFrame()
     
     for participant_idx, participant_data in enumerate(all_participant_data):
-        ubvae_participant_accuracies = []
-        bvae_participant_accuracies = []
-        vae_participant_accuracies = []
-        uvae_participant_accuracies = []
+        print(participant_data)
 
+        data = pd.read_csv(join('./data/participantResponses/', participant_data))  
+        print(data)
+        msk = np.random.rand(len(data)) < 0.8
+
+        train = df[msk]
+        test = df[~msk]
+
+        print(train)
+
+        assert(False)
+        model_accuracies = []
         meu_participant_accuracies = []
         cpt_participant_accuracies = []
 
@@ -352,13 +360,6 @@ def main(args):
 
         np.set_printoptions(threshold=np.inf)
         aversion = pa.loc[pa['Id'] == int(id)]
-
-        ubvae_model = load_model()
-        bvae_model = load_model()
-        uvae_model = load_model()
-        vae_model = load_model()
-
-        assert(False)
 
         
         #inv_temp = inv_temp_parameters[participant_idx]

@@ -1,4 +1,23 @@
-# Disentangled VAE [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/YannDubs/disentangling-vae/blob/master/LICENSE) [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+## Sim.py
+
+## Train.py 
+
+## Test.py 
+
+## trained_models
+
+### ColorsA:
+This folder contains models trained in the 
+
+## data/marbles 
+
+## figures
+
+## 
+
+### The Following is a reproduction of the repository information that this set of models was built off of. The original repository [can be found here](https://github.com/YannDubs/disentangling-vae). Special thanks to Yann Dubois for making this code publically available, open licence, and well organized.  
+
+## Disentangled VAE [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/YannDubs/disentangling-vae/blob/master/LICENSE) [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
 This repository contains code (training / metrics / plotting) to investigate disentangling in VAE as well as compare 5 different losses ([summary of the differences](#losses-explanation)) using a [single architecture](#single-model-comparison):
 
