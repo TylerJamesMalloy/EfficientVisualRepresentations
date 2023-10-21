@@ -9,7 +9,7 @@
     "btcvae_G": 1,
     "checkpoint_every": 500,
     "dataset": "marbles",
-    "epochs": 1000,
+    "epochs": 10000,
     "eval_batchsize": 1000,
     "experiment": "custom",
     "factor_G": 6,
