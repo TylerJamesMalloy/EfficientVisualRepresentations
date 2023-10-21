@@ -7,17 +7,13 @@ import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(nrows=1, ncols=2)
 
-"""participantAversion = pd.read_pickle(".\participantAversion_e1.pkl")
+participantAversion = pd.read_pickle(".\participantAversion_e1.pkl")
 participantAversion = participantAversion.reset_index()
-sns.histplot(participantAversion, x="Risk Aversion Coefficient", ax=axes[1])
-plt.show()
-
-assert(False)"""
-axes[1].set_ylabel("Participant Count")
+"""axes[1].set_ylabel("Participant Count")
 axes[1].set_xlabel("Risk Aversion Coefficient")
-axes[1].set_title("Participant Risk Aversion Coefficients")
+axes[1].set_title("Participant Risk Aversion Coefficients")"""
 
-df = pd.read_csv("../clean/participantData.csv")
+df = pd.read_csv("../data/participantData.csv")
 """'
 Unnamed: 0', 'Id', 'Experiment Type', 'Marble Set', 'Block', 'Trial',
        'Trial Type', 'Reaction Time', 'Left Stimulus', 'Right Stimulus',
@@ -83,6 +79,31 @@ sns.regplot(x=xd, y=yd, order=3, ax=axes[0], label="Unweighted")
 axes[0].set_ylabel("Participant Choice Probability")
 axes[0].set_xlabel("Utility Difference (Chosen - Unchosen)")
 axes[0].set_title("Participant Choice Probability by Utility Difference")
+
+splitAversion = pd.read_pickle(".\splitAversion_e1.pkl")
+splitAversion = splitAversion.reset_index()
+
+splitAversion["Log Likelihood"] = -1 * splitAversion["Log Likelihood"]
+
+splitAversion.loc[splitAversion["Split"] == 20, 'Model'] = "CPT 20"
+splitAversion.loc[splitAversion["Split"] == 40, 'Model'] = "CPT 40"
+splitAversion.loc[splitAversion["Split"] == 60, 'Model'] = "CPT 60"
+
+print(splitAversion["Model"].unique())
+
+#palette = sns.color_palette("mako", as_cmap=True)
+#palette = sns.color_palette("flare", as_cmap=True)
+palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True)
+
+order = ["EUT", "CPT 20", "CPT 40", "CPT 60", "CPT"]
+
+sns.barplot(splitAversion, x="Model", y="Log Likelihood", errorbar=('ci', 90), order=order, palette=palette, ax=axes[1], hue="Split")
+
+axes[1].set_ylabel("Log Likelihood")
+axes[1].set_xlabel("Model and Data Split")
+axes[1].set_title("Log Likelihood by Model and Data Split")
+
+
 
 plt.show()
 
