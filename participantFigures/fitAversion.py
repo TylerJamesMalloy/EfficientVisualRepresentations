@@ -125,9 +125,9 @@ if __name__ == '__main__':
 
     fig, axes = plt.subplots(nrows=1, ncols=2)
 
-    participantAversion.to_pickle(".\fitAversion.pkl")
+    participantAversion.to_pickle("./fitAversion.pkl")
 
-    splitAversion = pd.read_pickle(".\fitAversion.pkl")
+    splitAversion = pd.read_pickle("./fitAversion.pkl")
     splitAversion = splitAversion.reset_index()
     #splitAversion = splitAversion[splitAversion['Risk Sensitivite Coefficient'] > -50]
     #splitAversion = splitAversion[splitAversion['Risk Sensitivite Coefficient'] < 50]

@@ -21,12 +21,11 @@ def aversion(coefficient, idf, test=False):
             original_ev = np.mean(original_marbles)
             new_ev = np.mean(new_marbles)
 
-            max_diff = (2 - 4) ** 2
-            ev_diff = ((original_ev - new_ev) ** 2) / max_diff
-            vis_diff = np.sum([original_marbles[x] != new_marbles[x] for x in range(len(original_marbles))]) / 9
-            weighted_diff = (((1 - coefficient) * vis_diff) + (coefficient * ev_diff)) 
-            weighted = [1 - weighted_diff, weighted_diff] #[No change detected, change detected]
-            weighted = np.exp(weighted)/np.exp(weighted).sum()
+            stim_1 = stimuli[int(data['stim_1'][ind])].unsqueeze(0)
+            stim_1_recon , _, _, stim_1_pred_util = participant_model(stim_1)
+
+            stim_2 = stimuli[int(data['stim_2'][ind])].unsqueeze(0)
+            stim_2_recon , _, _, stim_2_pred_util = participant_model(stim_2)
 
             correct = trial['Correct']
             incorrect = 0 if trial['Correct'] else 1
@@ -119,9 +118,9 @@ if __name__ == '__main__':
         d = pd.DataFrame([[id, "Utility", 40, Loss, coef]], columns=participantChangeColumns) 
         participantChange = pd.concat([participantChange, d])
 
-    participantChange.to_pickle(".\splitChange_2.pkl")
+    participantChange.to_pickle("./splitChange.pkl")
 
-    splitChange = pd.read_pickle(".\splitChange_2.pkl")
+    splitChange = pd.read_pickle("./splitChange.pkl")
     splitChange = splitChange.reset_index()
 
     order = ["Visual", "Utility 40", "Utility 60", "Utility 80"]

@@ -5,10 +5,22 @@ import seaborn as sns
 import matplotlib.pyplot as plt 
 import numpy_indexed as npi
 
-def aversion(coefficient, idf, test=False):
+def aversion(coefficients, idf, test=False):
+    utility_coefficient = coefficients[0]
+    learning_rate = coefficients[1]
+    old_block = 1.0
+    num_util_observations = 0
     Losses = []
     Accuracies = []
+
     for _, trial in idf.iterrows(): 
+        if(trial['Block'] != old_block):
+            old_block = trial['Block'] 
+            num_util_observations = 0
+
+        if(trial['Trial Type'] == 'Utility Selection'):
+            num_util_observations += 1
+
         if(trial['Trial Type'] == 'Change Detection' and trial['Changed']):
             
             original_marbles = trial['Right Stimulus Marbles'] if trial['Changed Index'] else trial['Left Stimulus Marbles']
@@ -20,6 +32,8 @@ def aversion(coefficient, idf, test=False):
 
             original_ev = np.mean(original_marbles)
             new_ev = np.mean(new_marbles)
+
+            coefficient = utility_coefficient * (learning_rate * (num_util_observations / 10))
 
             max_diff = (2 - 4) ** 2
             ev_diff = ((original_ev - new_ev) ** 2) / max_diff
@@ -45,12 +59,12 @@ if __name__ == '__main__':
     #df = df[df['Experiment Type'] == 'Learning']
     ids = df["Id"].unique()
 
-    participantChangeColumns = ["Id", "Model", "Split", "Likelihood", "Coefficient"]
-    participantChange = pd.DataFrame([], columns=participantChangeColumns)
+    fitEquivalenceColumns = ["Id", "Model", "Split", "Likelihood", "Utility Coefficient", "Learning Rate"]
+    fitEquivalence = pd.DataFrame([], columns=fitEquivalenceColumns)
 
     
     changes = []
-    x0 = [0.0]
+    x0 = [0.0, 0.5]
 
     good = []
 
@@ -60,77 +74,82 @@ if __name__ == '__main__':
         #if(idx > 40): continue 
         
         rng = np.random.default_rng(id)
-
-        EUT_Loss = -1 * aversion(0, idf, True)
+        EUT_Loss = -1 * aversion((0,0), idf, True)
         
         good.append(id)
 
-        d = pd.DataFrame([[id, "Visual", 100, EUT_Loss, 0]], columns=participantChangeColumns) 
-        participantChange = pd.concat([participantChange, d])
+        d = pd.DataFrame([[id, "Visual", 100, EUT_Loss, 0, 0]], columns=fitEquivalenceColumns) 
+        fitEquivalence = pd.concat([fitEquivalence, d])
 
-        bnds = ((-100, 100), )
+        bnds = ((-100, 100), (0, 100))
 
         res = sp.optimize.minimize(aversion, x0, args=(idf), method='L-BFGS-B', bounds=bnds, tol=1e-5)
-        coef = res.x[0]
+        utility_coef = res.x[0]
+        learning_rate = res.x[1]
         
         rng = np.random.default_rng(id)
 
-        CPT_Loss = -1 * aversion(coef, idf, True)
+        CPT_Loss = -1 * aversion((utility_coef, learning_rate), idf, True)
 
-        d = pd.DataFrame([[id, "Utility", 100, CPT_Loss, coef]], columns=participantChangeColumns) 
-        participantChange = pd.concat([participantChange, d])
+        d = pd.DataFrame([[id, "Utility", 100, CPT_Loss, utility_coef, learning_rate]], columns=fitEquivalenceColumns) 
+        fitEquivalence = pd.concat([fitEquivalence, d])
 
 
         msk = rng.random(len(idf)) < 0.80
         train = idf[msk]
         
         res = sp.optimize.minimize(aversion, x0, args=(train), method='L-BFGS-B', bounds=bnds, tol=1e-5)
-        coef = res.x[0]
+        utility_coef = res.x[0]
+        learning_rate = res.x[1]
         test = idf[~msk]
 
-        Loss = -1 * aversion(coef, test, True)
+        Loss = -1 * aversion((utility_coef, learning_rate), test, True)
         
-        d = pd.DataFrame([[id, "Utility", 80, Loss, coef]], columns=participantChangeColumns) 
-        participantChange = pd.concat([participantChange, d])
+        d = pd.DataFrame([[id, "Utility", 80, Loss, utility_coef, learning_rate]], columns=fitEquivalenceColumns) 
+        fitEquivalence = pd.concat([fitEquivalence, d])
 
         msk = rng.random(len(idf)) < 0.60
         train = idf[msk]
         
         res = sp.optimize.minimize(aversion, x0, args=(train), method='L-BFGS-B', bounds=bnds, tol=1e-5)
-        coef = res.x[0]
+        utility_coef = res.x[0]
+        learning_rate = res.x[1]
 
         test = idf[~msk]
 
-        Loss = -1 * aversion(coef, test, True)
+        Loss = -1 * aversion((utility_coef, learning_rate), test, True)
         
-        d = pd.DataFrame([[id, "Utility", 60, Loss, coef]], columns=participantChangeColumns) 
-        participantChange = pd.concat([participantChange, d])
+        d = pd.DataFrame([[id, "Utility", 60, Loss, utility_coef, learning_rate]], columns=fitEquivalenceColumns) 
+        fitEquivalence = pd.concat([fitEquivalence, d])
 
         msk = rng.random(len(idf)) < 0.40
         train = idf[msk]
         
         res = sp.optimize.minimize(aversion, x0, args=(train), method='L-BFGS-B', bounds=bnds, tol=1e-5)
-        coef = res.x[0]
+        utility_coef = res.x[0]
+        learning_rate = res.x[1]
 
         test = idf[~msk]
 
-        Loss = -1 * aversion(coef, test, True)
+        Loss = -1 * aversion((utility_coef, learning_rate), test, True)
         
-        d = pd.DataFrame([[id, "Utility", 40, Loss, coef]], columns=participantChangeColumns) 
-        participantChange = pd.concat([participantChange, d])
+        d = pd.DataFrame([[id, "Utility", 40, Loss, utility_coef, learning_rate]], columns=fitEquivalenceColumns) 
+        fitEquivalence = pd.concat([fitEquivalence, d])
 
-    participantChange.to_pickle(".\splitChange_2.pkl")
+    fitEquivalence.to_pickle("./fitEquivalence.pkl")
 
-    splitChange = pd.read_pickle(".\splitChange_2.pkl")
-    splitChange = splitChange.reset_index()
+    fitEquivalence = pd.read_pickle("./fitEquivalence.pkl")
+    fitEquivalence = fitEquivalence.reset_index()
 
     order = ["Visual", "Utility 40", "Utility 60", "Utility 80"]
 
-    splitChange.loc[splitChange['Split'] == 80, 'Model'] = "Utility 80"
-    splitChange.loc[splitChange['Split'] == 60, 'Model'] = "Utility 60"
-    splitChange.loc[splitChange['Split'] == 40, 'Model'] = "Utility 40"
+    fitEquivalence.loc[fitEquivalence['Split'] == 80, 'Model'] = "Utility 80"
+    fitEquivalence.loc[fitEquivalence['Split'] == 60, 'Model'] = "Utility 60"
+    fitEquivalence.loc[fitEquivalence['Split'] == 40, 'Model'] = "Utility 40"
 
-    sns.barplot(data=splitChange, x="Model", y="Likelihood", errorbar=('ci', 90), hue="Split")
+    print(fitEquivalence.groupby["Model"].means())
+
+    sns.barplot(data=fitEquivalence, x="Model", y="Likelihood", errorbar=('ci', 90), hue="Split")
     #plt.ylim(0.7, 0.825)
     plt.show()
 

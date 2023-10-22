@@ -6,15 +6,36 @@ import pandas as pd
 import numpy as np 
 import seaborn as sns
 import matplotlib.pyplot as plt 
+import scipy.stats as stats
+
+learnedAversion = pd.read_pickle("./fitLearned.pkl")
+fig, axes = plt.subplots(nrows=1, ncols=2)
+order = ["EUT", "CPT 40", "CPT 60", "CPT 80", "CPT"]
+
+palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
+sns.barplot(data=learnedAversion, x="Model", y="Log Likelihood", errorbar=('ci', 90), order=order, hue="Split", palette=palette, ax=axes[1])
+
+axes[1].set_ylabel("Log Likelihood", fontsize=12)
+axes[1].set_xlabel("Model and Data Split", fontsize=12)
+axes[1].set_title("Log Likelihood by Model and Data Split", fontsize=14)
+
+# ANOVA
+result = stats.f_oneway(learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 80"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 60"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 40"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "EUT"])
+print(result)
+
+res = stats.tukey_hsd(learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 80"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 60"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 40"],
+                        learnedAversion['Log Likelihood'][learnedAversion['Model'] == "EUT"])
+print(res)
+
 
 df = pd.read_csv("../data/participantData.csv")
-"""'
-Unnamed: 0', 'Id', 'Experiment Type', 'Marble Set', 'Block', 'Trial',
-       'Trial Type', 'Reaction Time', 'Left Stimulus', 'Right Stimulus',
-       'Left Stimulus Marbles', 'Right Stimulus Marbles', 'New Stimulus',
-       'New Stimulus Marbles', 'Changed', 'Changed Index', 'Key Pressed',
-       'Reward', 'Correct'
-"""
 
 df = df[df['Experiment Type'] == 'Learning']
 
@@ -37,13 +58,12 @@ for id in ids:
     num_util_observations = 0
 
     for tindex, trial in idf.iterrows(): 
-        num_util_observations += 1
-
         if(trial['Block'] != old_block):
             old_block = trial['Block'] 
             num_util_observations = 0
 
         if(trial['Trial Type'] == 'Utility Selection'):
+            num_util_observations += 1
             left_marbles = list(filter(lambda a: a != "[" and a != "]" and a != " " and a != ",", trial['Left Stimulus Marbles'])) 
             rght_marbles = list(filter(lambda a: a != "[" and a != "]" and a != " " and a != ",", trial['Right Stimulus Marbles'])) 
             left_marbles = list(int(a) for a in left_marbles)
@@ -63,8 +83,37 @@ for id in ids:
 from scipy.stats import pearsonr 
 
 correlationColumns = ["Number of Utility Observations", "Pearson Correlation"]
-correlations = pd.DataFrame([], correlationColumns)
+correlations = pd.DataFrame([[1, -0.05],
+                             [2, 0.04],
+                             [3, 0.19],
+                             [4, 0.2],
+                             [5, 0.24],
+                             [6, 0.23],
+                             [7, 0.21],
+                             [8, 0.25],
+                             [9, 0.22],
+                             ], columns=correlationColumns)
 
+from scipy.optimize import curve_fit
+
+# Fitting
+model = lambda x, A, x0, offset:  offset+A*np.log(x-x0)
+popt, pcov = curve_fit(model, correlations["Number of Utility Observations"].values, 
+                              correlations["Pearson Correlation"].values, p0=[1,0,2])
+#plot fit
+x = np.linspace(correlations["Number of Utility Observations"].values.min(), correlations["Number of Utility Observations"].values.max(),250)
+axes[0].plot(x, model(x,*popt), label="Regression")
+axes[0].scatter(correlations["Number of Utility Observations"].tolist(), correlations["Pearson Correlation"].tolist())
+
+#sns.lmplot(x="Number of Utility Observations", y="Pearson Correlation", data=correlations, order=2, ci=None, scatter_kws={"s": 80})
+axes[0].set_ylabel("Correlation of Variance and Selection", fontsize=12)
+axes[0].set_xlabel("Number of Utility Observations", fontsize=12)
+axes[0].set_title("Correlation by Number of Utility Observations", fontsize=14)
+
+plt.show()
+
+
+"""
 for observations in range(0,9):
     if(observations == 0): continue
     data = selectionProbability[selectionProbability["Utility Observations"] == observations]
@@ -90,23 +139,4 @@ for observations in range(0,9):
     d = pd.DataFrame([[observations, value]], columns=correlationColumns)
     correlations = pd.concat([d, correlations], ignore_index=True)
 
-from scipy.optimize import curve_fit
-correlations = correlations.dropna()
-correlations = correlations.reset_index()
-print(correlations)
-
-# Fitting
-model = lambda x, A, x0, offset:  offset+A*np.log(x-x0)
-popt, pcov = curve_fit(model, correlations["Number of Utility Observations"].values, 
-                              correlations["Pearson Correlation"].values, p0=[1,0,2])
-#plot fit
-x = np.linspace(correlations["Number of Utility Observations"].values.min(), correlations["Number of Utility Observations"].values.max(),250)
-plt.plot(x,model(x,*popt), label="Regression")
-sns.scatterplot(correlations, x="Number of Utility Observations", y="Pearson Correlation")
-
-#sns.lmplot(x="Number of Utility Observations", y="Pearson Correlation", data=correlations, order=2, ci=None, scatter_kws={"s": 80})
-plt.ylabel("Correlation of Variance and Selection", fontsize=12)
-plt.xlabel("Number of Utility Observations", fontsize=12)
-
-plt.title("Correlation by Number of Utility Observations", fontsize=14)
-plt.show()
+"""
