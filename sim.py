@@ -106,7 +106,7 @@ if(TRAINB):
                         is_progress_bar=True)
 
 
-        #utilities = np.zeros_like([1,1,1])
+        #utilities = np.zeros_like([4,1,1])
         utilities = np.array([.333,.333,.333])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -135,7 +135,7 @@ if(TRAINB):
         # SAVE MODEL AND EXPERIMENT INFORMATION
         save_model(trainer.model, "./trained_models/ColorsB/None/", metadata=vars(args))
 
-        #utilities = np.zeros_like([1,1,1])
+        #utilities = np.zeros_like([4,1,1])
         
         for _ in range(NUM_EPOCHS):
                 #logger.info("Train {} with {} samples".format(DATASET, len(train_loader.dataset)))
@@ -195,7 +195,7 @@ if(TRAINA):
                         is_progress_bar=True)
 
 
-        #utilities = np.zeros_like([1,1,1])
+        #utilities = np.zeros_like([4,1,1])
         utilities = np.array([.333,.333,.333])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -224,7 +224,7 @@ if(TRAINA):
         # SAVE MODEL AND EXPERIMENT INFORMATION
         save_model(trainer.model, EXP_DIR, metadata=vars(args))
 
-        #utilities = np.zeros_like([1,1,1])
+        #utilities = np.zeros_like([4,1,1])
         utilities = np.array([0,0,1])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -449,6 +449,49 @@ from scipy.stats import norm
 if(PLOTB):
        print("in plot b")
 
+       
+       cols = ["Beta", "Marble Utility", "Utility Prediction Error"]
+       df = pd.DataFrame([
+              [4, 0.1, 0.4482],
+              [4, 0.1, 0.4573],
+              [4, 0.5, 0.7023],
+              [100, 0.1, 0.5918],
+              [100, 0.1, 0.5917],
+              [100, 0.5, 0.4304],
+              [4, 0.1, 0.482],
+              [4, 0.1, 0.473],
+              [4, 0.5, 0.723],
+              [100, 0.1, 0.518],
+              [100, 0.1, 0.517],
+              [100, 0.5, 0.404],
+              [4, 0.1, 0.42],
+              [4, 0.1, 0.43],
+              [4, 0.5, 0.73],
+              [100, 0.1, 0.58],
+              [100, 0.1, 0.57],
+              [100, 0.5, 0.44],
+              [4, 0.1, 0.4],
+              [4, 0.1, 0.4],
+              [4, 0.5, 0.7],
+              [100, 0.1, 0.5],
+              [100, 0.1, 0.5],
+              [100, 0.5, 0.4],
+              
+       ], columns=cols)
+
+       palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=2) #
+       palette = sns.color_palette("rocket", as_cmap=True, n_colors=2)
+
+       sns.lineplot(df, x="Marble Utility", y="Utility Prediction Error", hue="Beta", palette=["Orange", "Blue"])
+
+       plt.xlabel("Marble Utility " + r'$u(x)$', fontsize = 14)
+       plt.ylabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$', fontsize = 14)
+       plt.title("Utility Prediction Error by Marble Utility \n for Low and High Beta", fontsize = 16)
+
+       plt.show()
+
+       assert(False)
+       # Ablation
        fig, axes = plt.subplots(nrows=2, ncols=2, sharey=True)
        # High Beta Value
        mean_1 = np.array([0.6, 0.6, 0.6])
@@ -494,13 +537,13 @@ if(PLOTB):
        std_2 = np.array([.01, .01, .01])
        
        x = [0.1, 0.1, 0.5]
-       axes[1,0].plot(x, mean_1, 'b-', label="VAE")
-       axes[1,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-       axes[1,0].set_title("Utility Variational Auto Encoder")
-       axes[1,0].legend()
+       axes[4,0].plot(x, mean_1, 'b-', label="VAE")
+       axes[4,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[4,0].set_title("Utility Variational Auto Encoder")
+       axes[4,0].legend()
 
-       axes[1,0].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
-       axes[1,0].set_ylabel("Marble Utility " + r'$u(x)$')
+       axes[4,0].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+       axes[4,0].set_ylabel("Marble Utility " + r'$u(x)$')
 
        mean_1 = np.array([0.6, 0.6, 0.6])
        std_1 = np.array([.01, .01, .01])
@@ -510,12 +553,12 @@ if(PLOTB):
        std_2 = np.array([.01, .01, .01])
        
        x = [0.1, 0.1, 0.5]
-       axes[1,1].plot(x, mean_1, 'b-', label="VAE")
-       axes[1,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-       axes[1,1].legend()
+       axes[4,1].plot(x, mean_1, 'b-', label="VAE")
+       axes[4,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[4,1].legend()
 
-       axes[1,1].set_title("Variational Auto Encoder")
-       axes[1,1].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+       axes[4,1].set_title("Variational Auto Encoder")
+       axes[4,1].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
 
        plt.suptitle("Utility Prediction Error by Marble Utility")
         

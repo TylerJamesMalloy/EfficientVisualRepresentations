@@ -37,7 +37,7 @@ def aversion(coefficient, idf, test=False):
             nll.append(loss)
     
     if(test):
-        return np.mean(loss)
+        return np.mean(nll)
     else:
         return (-1 * np.mean(accuracy)) + np.abs(coefficient) * 1e-3
 
@@ -125,9 +125,9 @@ if __name__ == '__main__':
 
     fig, axes = plt.subplots(nrows=1, ncols=2)
 
-    participantAversion.to_pickle(".\splitAversion_e1.pkl")
+    participantAversion.to_pickle(".\fitAversion.pkl")
 
-    splitAversion = pd.read_pickle(".\splitAversion_e1.pkl")
+    splitAversion = pd.read_pickle(".\fitAversion.pkl")
     splitAversion = splitAversion.reset_index()
     #splitAversion = splitAversion[splitAversion['Risk Sensitivite Coefficient'] > -50]
     #splitAversion = splitAversion[splitAversion['Risk Sensitivite Coefficient'] < 50]
