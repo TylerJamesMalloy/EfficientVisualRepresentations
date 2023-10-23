@@ -21,11 +21,12 @@ def aversion(coefficient, idf, test=False):
             original_ev = np.mean(original_marbles)
             new_ev = np.mean(new_marbles)
 
-            stim_1 = stimuli[int(data['stim_1'][ind])].unsqueeze(0)
-            stim_1_recon , _, _, stim_1_pred_util = participant_model(stim_1)
-
-            stim_2 = stimuli[int(data['stim_2'][ind])].unsqueeze(0)
-            stim_2_recon , _, _, stim_2_pred_util = participant_model(stim_2)
+            max_diff = (2 - 4) ** 2
+            ev_diff = ((original_ev - new_ev) ** 2) / max_diff
+            vis_diff = np.sum([original_marbles[x] != new_marbles[x] for x in range(len(original_marbles))]) / 9
+            weighted_diff = (((1 - coefficient) * vis_diff) + (coefficient * ev_diff)) 
+            weighted = [1 - weighted_diff, weighted_diff] #[No change detected, change detected]
+            weighted = np.exp(weighted)/np.exp(weighted).sum()
 
             correct = trial['Correct']
             incorrect = 0 if trial['Correct'] else 1
