@@ -29,6 +29,7 @@ fitEquivalence = fitEquivalence.reset_index()
 fitEquivalence.loc[fitEquivalence['Split'] == 80, 'Model'] = "Utility 40"
 fitEquivalence.loc[fitEquivalence['Split'] == 60, 'Model'] = "Utility 60"
 fitEquivalence.loc[fitEquivalence['Split'] == 40, 'Model'] = "Utility 80"
+fitEquivalence["Likelihood"] = fitEquivalence["Likelihood"] / 10
 
 order = ["Visual", "Utility 40", "Utility 60", "Utility 80", "Utility"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 

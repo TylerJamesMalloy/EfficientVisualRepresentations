@@ -12,6 +12,7 @@ learnedAversion = pd.read_pickle("./fitLearned.pkl")
 fig, axes = plt.subplots(nrows=1, ncols=2)
 order = ["EUT", "CPT 40", "CPT 60", "CPT 80", "CPT"]
 
+learnedAversion['Log Likelihood'] = learnedAversion['Log Likelihood'] / 10
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
 sns.barplot(data=learnedAversion, x="Model", y="Log Likelihood", errorbar=('ci', 90), order=order, hue="Split", palette=palette, ax=axes[1])
 

@@ -174,7 +174,7 @@ if __name__ == '__main__':
     for idx, id in enumerate(ids):        
         idf = df[df["Id"] == id]
         idf = idf.tail(180) # Skip learning trials
-        #if(idx > 10): continue 
+        if(idx > 1): continue 
         rng = np.random.default_rng(id)
 
         set = int(idf['Marble Set'].unique()[0])
@@ -380,6 +380,8 @@ if __name__ == '__main__':
         d = pd.DataFrame([[id, "UBVAE 40", 40, test_nll, beta_coef, upsilon_coef]], columns=modelLearnedColumns)
         modelLearned = pd.concat([d, modelLearned])
 
+
+    # "Number of Utility Observations", "Utility Bias Correlation"
 
     modelLearned = modelLearned.reset_index()
     modelLearned.to_pickle("./modelLearned2.pkl")

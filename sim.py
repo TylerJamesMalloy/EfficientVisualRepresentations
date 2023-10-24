@@ -61,7 +61,7 @@ parser.add_argument('--reg_anneal', type=int, default=10000)
 parser.add_argument('--util_loss', type=str, default="mse")
 parser.add_argument('--betaH_B', type=int, default=1)
 parser.add_argument('--upsilon', type=int, default=50)
-parser.add_argument('--img_size', type=list, default=[3,64,64])
+parser.add_argument('--img_size', type=list, default=[3,6100,64])
 parser.add_argument('--latent_dim', type=int, default=1)
 parser.add_argument('--model_type', type=str, default="Burgess")
 parser.add_argument('--batch_size', type=int, default=64)
@@ -87,7 +87,7 @@ model = init_specific_model("Burgess", "Malloy", img_size, 1)
 model = model.to(device)  # make sure trainer and viz on same device
 #gif_visualizer = GifTraversalsTraining(model, DATASET, EXP_DIR)
 train_loader = get_dataloaders(DATASET,
-                                batch_size=100,
+                                batch_size=4,
                                 logger=logger)
 
 if(TRAINB):
@@ -106,7 +106,7 @@ if(TRAINB):
                         is_progress_bar=True)
 
 
-        #utilities = np.zeros_like([4,1,1])
+        #utilities = np.zeros_like([100,1,1])
         utilities = np.array([.333,.333,.333])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -135,14 +135,14 @@ if(TRAINB):
         # SAVE MODEL AND EXPERIMENT INFORMATION
         save_model(trainer.model, "./trained_models/ColorsB/None/", metadata=vars(args))
 
-        #utilities = np.zeros_like([4,1,1])
+        #utilities = np.zeros_like([100,1,1])
         
         for _ in range(NUM_EPOCHS):
                 #logger.info("Train {} with {} samples".format(DATASET, len(train_loader.dataset)))
 
                 u0 = np.random.normal(0.5 , 0.1, 1)[0]
                 u1 = np.random.normal(0.5 , 0.1, 1)[0]
-                u2 = np.random.normal(0.75, 0.5, 1)[0]
+                u2 = np.random.normal(0.74, 0.5, 1)[0]
 
                 utilities = np.array([u0, u1, u2])
                 utilities = torch.from_numpy(utilities.astype(np.float64)).float()
@@ -195,7 +195,7 @@ if(TRAINA):
                         is_progress_bar=True)
 
 
-        #utilities = np.zeros_like([4,1,1])
+        #utilities = np.zeros_like([100,1,1])
         utilities = np.array([.333,.333,.333])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -224,7 +224,7 @@ if(TRAINA):
         # SAVE MODEL AND EXPERIMENT INFORMATION
         save_model(trainer.model, EXP_DIR, metadata=vars(args))
 
-        #utilities = np.zeros_like([4,1,1])
+        #utilities = np.zeros_like([100,1,1])
         utilities = np.array([0,0,1])
         utilities = torch.from_numpy(utilities.astype(np.float64)).float()
 
@@ -298,7 +298,7 @@ if(TESTA):
         print(np.mean(recon_errors)) # 41.84
         print(np.mean(utility_errors)) # 3.821 \times 10^{-3}
 
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
                 #value = np.random.normal(loc=dist[0],scale=dist[1],size=(1, 1000))
@@ -341,7 +341,7 @@ if(TESTA):
         print(np.mean(recon_errors)) # 48.36
         print(np.mean(utility_errors)) # 2.37 \times 10^{-2}
         print(dists)
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
                 #value = np.random.normal(loc=dist[0],scale=dist[1],size=(1, 1000))
@@ -387,7 +387,7 @@ if(TESTB):
         print(np.mean(recon_errors)) # 41.84
         print(np.mean(utility_errors)) # 3.821 \times 10^{-3}
 
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
                 #value = np.random.normal(loc=dist[0],scale=dist[1],size=(1, 1000))
@@ -430,7 +430,7 @@ if(TESTB):
         print(np.mean(recon_errors)) # 48.36
         print(np.mean(utility_errors)) # 2.37 \times 10^{-2}
         print(dists)
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
                 #value = np.random.normal(loc=dist[0],scale=dist[1],size=(1, 1000))
@@ -452,37 +452,37 @@ if(PLOTB):
        
        cols = ["Beta", "Marble Utility", "Utility Prediction Error"]
        df = pd.DataFrame([
-              [4, 0.1, 0.4482],
-              [4, 0.1, 0.4573],
-              [4, 0.5, 0.7023],
-              [100, 0.1, 0.5918],
-              [100, 0.1, 0.5917],
-              [100, 0.5, 0.4304],
-              [4, 0.1, 0.482],
-              [4, 0.1, 0.473],
-              [4, 0.5, 0.723],
-              [100, 0.1, 0.518],
-              [100, 0.1, 0.517],
-              [100, 0.5, 0.404],
-              [4, 0.1, 0.42],
-              [4, 0.1, 0.43],
-              [4, 0.5, 0.73],
-              [100, 0.1, 0.58],
-              [100, 0.1, 0.57],
-              [100, 0.5, 0.44],
-              [4, 0.1, 0.4],
-              [4, 0.1, 0.4],
-              [4, 0.5, 0.7],
-              [100, 0.1, 0.5],
-              [100, 0.1, 0.5],
-              [100, 0.5, 0.4],
+              [100, 0.1, 0.4482],
+              [100, 0.1, 0.4573],
+              [100, 0.5, 0.7023],
+              [4, 0.1, 0.5918],
+              [4, 0.1, 0.5917],
+              [4, 0.5, 0.4304],
+              [100, 0.1, 0.482],
+              [100, 0.1, 0.473],
+              [100, 0.5, 0.723],
+              [4, 0.1, 0.518],
+              [4, 0.1, 0.517],
+              [4, 0.5, 0.404],
+              [100, 0.1, 0.42],
+              [100, 0.1, 0.43],
+              [100, 0.5, 0.73],
+              [4, 0.1, 0.58],
+              [4, 0.1, 0.57],
+              [4, 0.5, 0.44],
+              [100, 0.1, 0.4],
+              [100, 0.1, 0.4],
+              [100, 0.5, 0.7],
+              [4, 0.1, 0.5],
+              [4, 0.1, 0.5],
+              [4, 0.5, 0.4],
               
        ], columns=cols)
 
-       palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=2) #
+       palette = sns.cubehelix_palette(start=.4, rot=-.4, as_cmap=True, n_colors=2) #
        palette = sns.color_palette("rocket", as_cmap=True, n_colors=2)
 
-       sns.lineplot(df, x="Marble Utility", y="Utility Prediction Error", hue="Beta", palette=["Orange", "Blue"])
+       sns.lineplot(df, x="Marble Utility", y="Utility Prediction Error", hue="Beta", palette=["Blue", "Orange"])
 
        plt.xlabel("Marble Utility " + r'$u(x)$', fontsize = 14)
        plt.ylabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$', fontsize = 14)
@@ -537,13 +537,13 @@ if(PLOTB):
        std_2 = np.array([.01, .01, .01])
        
        x = [0.1, 0.1, 0.5]
-       axes[4,0].plot(x, mean_1, 'b-', label="VAE")
-       axes[4,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-       axes[4,0].set_title("Utility Variational Auto Encoder")
-       axes[4,0].legend()
+       axes[100,0].plot(x, mean_1, 'b-', label="VAE")
+       axes[100,0].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[100,0].set_title("Utility Variational Auto Encoder")
+       axes[100,0].legend()
 
-       axes[4,0].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
-       axes[4,0].set_ylabel("Marble Utility " + r'$u(x)$')
+       axes[100,0].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+       axes[100,0].set_ylabel("Marble Utility " + r'$u(x)$')
 
        mean_1 = np.array([0.6, 0.6, 0.6])
        std_1 = np.array([.01, .01, .01])
@@ -553,12 +553,12 @@ if(PLOTB):
        std_2 = np.array([.01, .01, .01])
        
        x = [0.1, 0.1, 0.5]
-       axes[4,1].plot(x, mean_1, 'b-', label="VAE")
-       axes[4,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-       axes[4,1].legend()
+       axes[100,1].plot(x, mean_1, 'b-', label="VAE")
+       axes[100,1].fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+       axes[100,1].legend()
 
-       axes[4,1].set_title("Variational Auto Encoder")
-       axes[4,1].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
+       axes[100,1].set_title("Variational Auto Encoder")
+       axes[100,1].set_xlabel("Utility Prediction Error " + r'$\upsilon(U(z)-u(x))$')
 
        plt.suptitle("Utility Prediction Error by Marble Utility")
         
@@ -576,8 +576,8 @@ if(PLOTA):
         axes[0].set_title("Before Utility Training")
         axes[1].set_title("After Utility Training")
 
-        dists = [[-2.1744, 0.23192586] , [-0.9228, 0.23192586], [0.2437, 0.23192586]]
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        dists = [[-2.174100, 0.23192586] , [-0.9228, 0.23192586], [0.2437, 0.23192586]]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         color_labels = ["Orange Marble", "Green Marble", "Purple Marble"]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
@@ -598,16 +598,16 @@ if(PLOTA):
         
         mean_kl = round(np.mean(kl_divergences), 2)
         Recon_error = r'$E_{(q_{\phi} (z│x))}[log⁡[p_{\theta} (x|z)]] = 41.84$'
-        axes[0].text(0.05, 0.7, Recon_error, transform=axes[0].transAxes, fontsize=12)
+        axes[0].text(0.04, 0.7, Recon_error, transform=axes[0].transAxes, fontsize=12)
 
         KLD = r'$\beta D_{KL} (q_{\phi} (z│x)|p(z)) = 800.09$'
-        axes[0].text(0.05, 0.625, KLD, transform=axes[0].transAxes, fontsize=12)
+        axes[0].text(0.04, 0.624, KLD, transform=axes[0].transAxes, fontsize=12)
 
         Util_error = r'$\upsilon(U(z)-u(x))^2 = 3.82 \times 10^{-3}$'
-        axes[0].text(0.05, 0.55, Util_error, transform=axes[0].transAxes, fontsize=12)
+        axes[0].text(0.04, 0.54, Util_error, transform=axes[0].transAxes, fontsize=12)
         
         dists = [[-2.1258, 0.2192586] , [-1.4379, 0.2192586], [-0.1543, 0.09355588 ]]
-        colors = [(0.75,0.5,0.0), (0.5, 0.75, 0), (0.5, 0, 0.75)]
+        colors = [(0.74,0.5,0.0), (0.5, 0.74, 0), (0.5, 0, 0.75)]
         for idx, dist in enumerate(dists):
                 color = colors[idx]
                 color_label = color_labels[idx]
@@ -629,15 +629,15 @@ if(PLOTA):
         
         
         Recon_error = r'$E_{(q_{\phi} (z│x))}[log⁡[p_{\theta} (x|z)]] = 48.36$'
-        axes[1].text(0.05, 0.7, Recon_error, transform=axes[1].transAxes, fontsize=12)
+        axes[1].text(0.04, 0.7, Recon_error, transform=axes[1].transAxes, fontsize=12)
         
         mean_kl = round(np.mean(kl_divergences), 2)
         print(mean_kl)
         KLD = r'$\beta D_{KL} (q_{\phi} (z│x)|p(z)) = 1714.39$'
-        axes[1].text(0.05, 0.625, KLD, transform=axes[1].transAxes, fontsize=12)
+        axes[1].text(0.04, 0.624, KLD, transform=axes[1].transAxes, fontsize=12)
 
         Util_error = r'$υ(U(z)-u(x))^2 = 2.37 \times 10^{-2}$'
-        axes[1].text(0.05, 0.55, Util_error, transform=axes[1].transAxes, fontsize=12)
+        axes[1].text(0.04, 0.54, Util_error, transform=axes[1].transAxes, fontsize=12)
 
         fig.suptitle("Marble Stimuli Representation Distributions \n Before and After Utility Training")
         # Add KL Divergence 
