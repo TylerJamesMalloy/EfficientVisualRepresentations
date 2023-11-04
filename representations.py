@@ -241,6 +241,9 @@ def main(args):
     device = get_device(is_gpu=not args.no_cuda)
     exp_dir = os.path.join(RES_DIR, args.name)
 
+    args.upsilon = 0
+    args.beta = 10
+
     formatter = logging.Formatter('%(asctime)s %(levelname)s - %(funcName)s: %(message)s',
                                   "%H:%M:%S")
     logger = logging.getLogger(__name__)
@@ -251,14 +254,9 @@ def main(args):
     logger.addHandler(stream)
 
     args.img_size = get_img_size(args.dataset)
-
-
-    if(not os.path.exists(exp_dir + "/u0/")):
-        os.makedirs(exp_dir + "/u0/")
-
     model = init_specific_model(args.model_type, args.utility_type, args.img_size, args.latent_dim)
     model = model.to(device)  # make sure trainer and viz on same device
-    gif_visualizer = GifTraversalsTraining(model, args.dataset, exp_dir + "/u0/")
+    gif_visualizer = None
     train_loader = get_dataloaders(args.dataset,
                                     batch_size=args.batch_size,
                                     logger=logger,
@@ -274,254 +272,128 @@ def main(args):
     trainer = Trainer(model, optimizer, loss_f,
                         device=device,
                         logger=logger,
-                        save_dir=exp_dir  + "/u0/",
+                        save_dir="./trained_models/test/pretrain",
                         is_progress_bar=not args.no_progress_bar,
                         gif_visualizer=gif_visualizer)
     
-    utilities = np.zeros_like(stimuli_mean_utilities)
+    utilities = np.ones_like(stimuli_mean_utilities) * np.mean(stimuli_mean_utilities)
     utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
     trainer(train_loader,
             utilities=utilities, 
             epochs=args.epochs,
             checkpoint_every=args.checkpoint_every,)
-    
-    # Print model representations 
 
-    marble_set   = 0
-    train_loader = get_dataloaders("Marbles",
-                                    batch_size=100,
-                                    logger=None,
-                                    set=str(marble_set))
-
-    repColums = ["Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
+    repColums = ["Upsilon", "Beta", "Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
     reps = pd.DataFrame([[]], repColums)
-    stimuli = None 
-    for _, stimuli in enumerate(train_loader):
-        stimuli = stimuli.to(device)
-        stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = model(stimuli)
-        stim_means = stim_dists[0].cpu().detach().numpy()
-        stim_log_vars = stim_dists[1].cpu().detach().numpy()
-        stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
-        stim_latents = stim_latents.cpu().detach().numpy()
-        mean_util = np.mean(stim_1_pred_utils)
-
-        for mean, log_var, latent, pred_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils):
-            utility = "None"
-            if(pred_util > mean_util):
-                utility = "Low"
-            else:
-                utility = "High"
-
-            d = pd.DataFrame([[utility, latent[0], latent[1], mean[0], mean[1], log_var[0], log_var[1]]], columns=repColums)
-            reps = pd.concat([d, reps])
     
-    reps = reps.dropna()
-    sns.kdeplot(
-        data=reps, x="Dimension 1", y="Dimension 2", hue="Utility",
-        levels=5, thresh=.2,
-    )
+    UPSILONS = [0, 100, 100]
+    BETAS = [4]
 
+    for upsilon in UPSILONS:
+        for beta in BETAS:
+            temp_model = init_specific_model(args.model_type, args.utility_type, args.img_size, args.latent_dim)
+            #temp_model = copy.deepcopy(model)
+            
+            args.upsilon = upsilon
+            args.beta = beta
+
+            exp_path = exp_dir + "/u" + str(upsilon) + "/b" + str(beta) + "/"
+
+            if(not os.path.exists(exp_path)):
+                os.makedirs(exp_path)
+
+            gif_visualizer = GifTraversalsTraining(model, args.dataset, exp_path)
+            
+            loss_f = get_loss_f(args.loss,
+                                n_data=len(train_loader.dataset),
+                                device=device,
+                                **vars(args))
+
+            trainer = Trainer(temp_model, optimizer, loss_f,
+                                device=device,
+                                logger=logger,
+                                save_dir=exp_path,
+                                is_progress_bar=not args.no_progress_bar,
+                                gif_visualizer=gif_visualizer)
+
+            utilities = np.array(stimuli_mean_utilities)
+            utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
+            trainer(train_loader,
+                    utilities=utilities, 
+                    epochs=args.epochs,
+                    checkpoint_every=args.checkpoint_every,)
+    
+            # Get model representations 
+            loss_f = get_loss_f(args.loss,
+                                n_data=len(train_loader.dataset),
+                                device=device,
+                                **vars(args))
+            
+            marble_set   = 0
+            data_loader = get_dataloaders("Marbles",
+                                            batch_size=100,
+                                            logger=None,
+                                            set=str(marble_set))
+
+            
+            stimuli = None 
+            for _, stimuli in enumerate(data_loader):
+                stimuli = stimuli.to(device)
+                stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = temp_model(stimuli)
+                stim_means = stim_dists[0].cpu().detach().numpy()
+                stim_log_vars = stim_dists[1].cpu().detach().numpy()
+                stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
+                stim_latents = stim_latents.cpu().detach().numpy()
+                mean_util = np.mean(stim_1_pred_utils)
+
+                for mean, log_var, latent, pred_util, stim_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils, stimuli_mean_utilities):
+                    utility = "None"
+                    """if(pred_util > mean_util):
+                        utility = "Low"
+                    else:
+                        utility = 'High' """
+                    
+                    if(stim_util < 2.6):
+                        utility = "Low"
+                    elif(stim_util > 2.6 and stim_util < 2.8):
+                        continue
+                        utility = "Med"
+                    else:
+                        utility = "High"
+
+                    d = pd.DataFrame([[upsilon, beta, utility, latent[0], latent[1], mean[0], mean[1], log_var[0], log_var[1]]], columns=repColums)
+                    reps = pd.concat([d, reps])
+            
+    reps = reps.dropna()
     reps.to_pickle("Representations.pkl")
 
-    #plt.show()
+    fig, axes = plt.subplots(nrows=len(BETAS), ncols=len(UPSILONS), sharey=True)
 
-    temp_model = copy.deepcopy(model)
+    #reps = pd.read_pickle("Representations.pkl")
 
-    if(not os.path.exists(exp_dir + "/u100/")):
-        os.makedirs(exp_dir + "/u100/")
+    for col, upsilon in enumerate(UPSILONS):
+        for row, beta in enumerate(BETAS):
+            plot_reps = reps[(reps["Beta"] == beta) & (reps["Upsilon"] == upsilon)]
+            print(plot_reps)
+            sns.kdeplot(
+                data=plot_reps, x="Dimension 1", y="Dimension 2", hue="Utility",
+                levels=5, thresh=.2, ax=axes[row, col]
+            )
 
-    gif_visualizer = GifTraversalsTraining(model, args.dataset, exp_dir + "/u100/")
-    args.upsilon = 100
-    loss_f = get_loss_f(args.loss,
-                        n_data=len(train_loader.dataset),
-                        device=device,
-                        **vars(args))
+    plt.show()
 
-    trainer = Trainer(temp_model, optimizer, loss_f,
-                        device=device,
-                        logger=logger,
-                        save_dir=exp_dir +  "/u100/",
-                        is_progress_bar=not args.no_progress_bar,
-                        gif_visualizer=gif_visualizer)
+    fig, axes = plt.subplots(nrows=len(BETAS), ncols=len(UPSILONS), sharey=True)
 
-    utilities = np.array(stimuli_mean_utilities)
-    utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
-    trainer(train_loader,
-            utilities=utilities, 
-            epochs=args.epochs,
-            checkpoint_every=args.checkpoint_every,)
-    
-    # Print model representations 
+    for col, upsilon in enumerate(UPSILONS):
+        for row, beta in enumerate(BETAS):
+            plot_reps = reps[(reps["Beta"] == beta) & (reps["Upsilon"] == upsilon)]
+            print(plot_reps)
+            sns.kdeplot(
+                data=plot_reps, x="Mean 1", y="Mean 2", hue="Utility",
+                levels=5, thresh=.2, ax=axes[row, col]
+            )
 
-    args.upsilon = 100
-    loss_f = get_loss_f(args.loss,
-                        n_data=len(train_loader.dataset),
-                        device=device,
-                        **vars(args))
-    
-    marble_set   = 0
-    train_loader = get_dataloaders("Marbles",
-                                    batch_size=100,
-                                    logger=None,
-                                    set=str(marble_set))
-
-    repColums = ["Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
-    reps = pd.DataFrame([[]], repColums)
-    stimuli = None 
-    for _, stimuli in enumerate(train_loader):
-        stimuli = stimuli.to(device)
-        stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = temp_model(stimuli)
-        stim_means = stim_dists[0].cpu().detach().numpy()
-        stim_log_vars = stim_dists[1].cpu().detach().numpy()
-        stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
-        stim_latents = stim_latents.cpu().detach().numpy()
-        mean_util = np.mean(stim_1_pred_utils)
-
-        for mean, log_var, latent, pred_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils):
-            utility = "None"
-            if(pred_util > mean_util):
-                utility = "Low"
-            else:
-                utility = "High"
-
-            d = pd.DataFrame([[utility, latent[0], latent[1], mean[0], mean[1], log_var[0], log_var[1]]], columns=repColums)
-            reps = pd.concat([d, reps])
-    
-    reps = reps.dropna()
-    sns.kdeplot(
-        data=reps, x="Dimension 1", y="Dimension 2", hue="Utility",
-        levels=5, thresh=.2,
-    )
-
-    reps.to_pickle("Representations_Trained_u100.pkl")
-
-    temp_model = copy.deepcopy(model)
-
-    if(not os.path.exists(exp_dir + "/u10/")):
-        os.makedirs(exp_dir + "/u10/")
-
-    gif_visualizer = GifTraversalsTraining(model, args.dataset, exp_dir + "/u10/")
-    args.upsilon = 10
-    loss_f = get_loss_f(args.loss,
-                        n_data=len(train_loader.dataset),
-                        device=device,
-                        **vars(args))
-
-    trainer = Trainer(temp_model, optimizer, loss_f,
-                        device=device,
-                        logger=logger,
-                        save_dir=exp_dir  + "/u10/",
-                        is_progress_bar=not args.no_progress_bar,
-                        gif_visualizer=gif_visualizer)
-
-    utilities = np.array(stimuli_mean_utilities)
-    utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
-    trainer(train_loader,
-            utilities=utilities, 
-            epochs=args.epochs,
-            checkpoint_every=args.checkpoint_every,)
-    
-    # Print model representations 
-    
-    marble_set   = 0
-    train_loader = get_dataloaders("Marbles",
-                                    batch_size=100,
-                                    logger=None,
-                                    set=str(marble_set))
-
-    repColums = ["Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
-    reps = pd.DataFrame([[]], repColums)
-    stimuli = None 
-    for _, stimuli in enumerate(train_loader):
-        stimuli = stimuli.to(device)
-        stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = temp_model(stimuli)
-        stim_means = stim_dists[0].cpu().detach().numpy()
-        stim_log_vars = stim_dists[1].cpu().detach().numpy()
-        stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
-        stim_latents = stim_latents.cpu().detach().numpy()
-        mean_util = np.mean(stim_1_pred_utils)
-
-        for mean, log_var, latent, pred_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils):
-            utility = "None"
-            if(pred_util > mean_util):
-                utility = "Low"
-            else:
-                utility = "High"
-
-            d = pd.DataFrame([[utility, latent[0], latent[1], mean[0], mean[1], log_var[0], log_var[1]]], columns=repColums)
-            reps = pd.concat([d, reps])
-    
-    reps = reps.dropna()
-    sns.kdeplot(
-        data=reps, x="Dimension 1", y="Dimension 2", hue="Utility",
-        levels=5, thresh=.2,
-    )
-
-    reps.to_pickle("Representations_Trained_u10.pkl")
-
-    temp_model = copy.deepcopy(model)
-
-    if(not os.path.exists(exp_dir + "/u1/")):
-        os.makedirs(exp_dir + "/u1/")
-
-    args.upsilon = 1
-    gif_visualizer = GifTraversalsTraining(model, args.dataset, exp_dir + "/u1/")
-    loss_f = get_loss_f(args.loss,
-                        n_data=len(train_loader.dataset),
-                        device=device,
-                        **vars(args))
-
-    trainer = Trainer(temp_model, optimizer, loss_f,
-                        device=device,
-                        logger=logger,
-                        save_dir=exp_dir  + "/u1/",
-                        is_progress_bar=not args.no_progress_bar,
-                        gif_visualizer=gif_visualizer)
-
-    utilities = np.array(stimuli_mean_utilities)
-    utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
-    trainer(train_loader,
-            utilities=utilities, 
-            epochs=args.epochs,
-            checkpoint_every=args.checkpoint_every,)
-    
-    # Print model representations 
-    
-    marble_set   = 0
-    train_loader = get_dataloaders("Marbles",
-                                    batch_size=100,
-                                    logger=None,
-                                    set=str(marble_set))
-
-    repColums = ["Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
-    reps = pd.DataFrame([[]], repColums)
-    stimuli = None 
-    for _, stimuli in enumerate(train_loader):
-        stimuli = stimuli.to(device)
-        stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = temp_model(stimuli)
-        stim_means = stim_dists[0].cpu().detach().numpy()
-        stim_log_vars = stim_dists[1].cpu().detach().numpy()
-        stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
-        stim_latents = stim_latents.cpu().detach().numpy()
-        mean_util = np.mean(stim_1_pred_utils)
-
-        for mean, log_var, latent, pred_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils):
-            utility = "None"
-            if(pred_util > mean_util):
-                utility = "Low"
-            else:
-                utility = "High"
-
-            d = pd.DataFrame([[utility, latent[0], latent[1], mean[0], mean[1], log_var[0], log_var[1]]], columns=repColums)
-            reps = pd.concat([d, reps])
-    
-    reps = reps.dropna()
-    sns.kdeplot(
-        data=reps, x="Dimension 1", y="Dimension 2", hue="Utility",
-        levels=5, thresh=.2,
-    )
-
-    reps.to_pickle("Representations_Trained_u1.pkl")
+    plt.show()
 
 if __name__ == '__main__':
     args = parse_arguments(sys.argv[1:])
