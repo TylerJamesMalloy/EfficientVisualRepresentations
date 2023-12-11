@@ -39,7 +39,7 @@ def aversion(coefficient, idf, test=False):
     if(test):
         return np.mean(nll)
     else:
-        return (-1 * np.mean(accuracy)) + np.abs(coefficient) * 1e-3
+        return (-1 * np.mean(accuracy)) #+ np.abs(coefficient) * 1e-3
 
 if __name__ == '__main__':
     df = pd.read_csv("../data/participantData.csv")

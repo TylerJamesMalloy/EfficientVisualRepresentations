@@ -285,9 +285,12 @@ def main(args):
 
     repColums = ["Upsilon", "Beta", "Utility", "Dimension 1", "Dimension 2", "Mean 1", "Mean 2", "Variance 1", "Variance 2"]
     reps = pd.DataFrame([[]], repColums)
+
+    utilColumns = ["Probability of Selection", "Outcome Variance Difference", "Beta"]
+    utils = pd.DataFrame([[]], utilColumns)
     
-    UPSILONS = [0, 100, 100]
-    BETAS = [4]
+    UPSILONS = [100]
+    BETAS = [4, 100]
 
     for upsilon in UPSILONS:
         for beta in BETAS:
@@ -316,7 +319,7 @@ def main(args):
                                 is_progress_bar=not args.no_progress_bar,
                                 gif_visualizer=gif_visualizer)
 
-            utilities = np.array(stimuli_mean_utilities)
+            utilities = np.array([2, 2, 3])
             utilities = torch.from_numpy(utilities.astype(np.float64)).float().to(device)
             trainer(train_loader,
                     utilities=utilities, 
@@ -330,21 +333,30 @@ def main(args):
                                 **vars(args))
             
             marble_set   = 0
-            data_loader = get_dataloaders("Marbles",
+            data_loader = get_dataloaders("colorsA",
                                             batch_size=100,
                                             logger=None,
                                             set=str(marble_set))
 
             
             stimuli = None 
-            for _, stimuli in enumerate(data_loader):
-                stimuli = stimuli.to(device)
-                stim_1_recons , stim_dists, stim_latents, stim_1_pred_utils = temp_model(stimuli)
-                stim_means = stim_dists[0].cpu().detach().numpy()
-                stim_log_vars = stim_dists[1].cpu().detach().numpy()
-                stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
-                stim_latents = stim_latents.cpu().detach().numpy()
-                mean_util = np.mean(stim_1_pred_utils)
+            for _, stimuli_1 in enumerate(data_loader):
+                for _, stimuli_2 in enumerate(data_loader):
+                    stimuli_1 = stimuli_1.to(device)
+                    _ , _, _, stim_1_pred_utils = temp_model(stimuli_1)
+                    stim_1_pred_utils = stim_1_pred_utils.cpu().detach().numpy()
+
+                    
+
+                    p = [stim_1_pred_utils, stim_2_pred_utils]
+                    print(p)
+                    assert(False)
+
+                # ["Probability of Selection", "Outcome Variance Difference", "Beta"]
+
+                d = pd.DataFrame([[mean_util]], columns=utilColumns)
+                utils = pd.concat([d, utils])
+
 
                 for mean, log_var, latent, pred_util, stim_util in zip(stim_means, stim_log_vars, stim_latents, stim_1_pred_utils, stimuli_mean_utilities):
                     utility = "None"
@@ -365,11 +377,12 @@ def main(args):
                     reps = pd.concat([d, reps])
             
     reps = reps.dropna()
-    reps.to_pickle("Representations.pkl")
+    #reps.to_pickle("dists.pkl")
+
+    utilColumns = utilColumns.dropna()
+    utilColumns.to_pickle("utils.pkl")
 
     fig, axes = plt.subplots(nrows=len(BETAS), ncols=len(UPSILONS), sharey=True)
-
-    #reps = pd.read_pickle("Representations.pkl")
 
     for col, upsilon in enumerate(UPSILONS):
         for row, beta in enumerate(BETAS):

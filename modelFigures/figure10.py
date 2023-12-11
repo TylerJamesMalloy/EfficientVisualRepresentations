@@ -34,7 +34,7 @@ sns.regplot(modelBehaviorAversion_High, x="Outcome Variance Difference", y="Chos
 sns.scatterplot(group, x="Outcome Variance Difference", y="Chosen", ax=axes[0])
 
 axes[0].set_ylabel("Model Probability of Selection", fontsize=12)
-axes[0].set_xlabel("Outcome Variance", fontsize=12)
+axes[0].set_xlabel("Outcome Variance Difference", fontsize=12)
 axes[0].set_title("Model Probability of Selection by Outcome Variance", fontsize=14)
 
 #sns.barplot(modelAversion, x="Model", y="Log Likelihood", hue="Split")

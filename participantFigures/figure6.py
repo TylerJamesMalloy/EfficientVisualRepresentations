@@ -33,8 +33,11 @@ riskAversionColumns = ["Outcome Expected Value (Chosen - Unchosen)", "Outcome Va
 riskAversion = pd.DataFrame([], columns=riskAversionColumns)
 riskAversionUnrounded = pd.DataFrame([], columns=riskAversionColumns)
 
-selectionProbabilityColumns = ["Id", "Utility Difference", "Variance Difference" , "Chosen"]
+selectionProbabilityColumns = ["Id", "Coefficient", "Utility Difference", "Variance Difference" , "Chosen"]
 selectionProbability = pd.DataFrame([], columns=selectionProbabilityColumns)
+
+
+
 
 for id in ids:
     idf = df[df["Id"] == id]
@@ -56,24 +59,53 @@ for id in ids:
             unchosen_ev = np.mean(rght_marbles) if trial['Key Pressed'] == "d" else np.mean(left_marbles)
             unchosen_var = np.var(rght_marbles) if trial['Key Pressed'] == "d" else np.var(left_marbles)
 
-            d = pd.DataFrame([[id, chosen_ev - unchosen_ev, chosen_var - unchosen_var,  1]], columns=selectionProbabilityColumns)
-            selectionProbability = pd.concat([selectionProbability, d], ignore_index=True)
-        
+            if(np.isfinite(coefficient) and np.isfinite(chosen_ev) and np.isfinite(chosen_var) and np.isfinite(unchosen_ev) and np.isfinite(unchosen_var)):
+                d = pd.DataFrame([[id, coefficient, chosen_ev - unchosen_ev, chosen_var - unchosen_var,  1]], columns=selectionProbabilityColumns)
+                if(d.isna().any().any()): continue
+                selectionProbability = pd.concat([selectionProbability, d], ignore_index=True)
 
+                d = pd.DataFrame([[id, coefficient, unchosen_ev - chosen_ev , unchosen_var - chosen_var,  0]], columns=selectionProbabilityColumns)
+                selectionProbability = pd.concat([selectionProbability, d], ignore_index=True)
+
+selectionProbability["Chosen"] = pd.to_numeric(selectionProbability["Chosen"])  
+selectionProbability["Id"] = pd.to_numeric(selectionProbability["Id"])
+print(selectionProbability.dtypes)
 #print(np.sum(selectionProbability["Utility Difference"] > 0))   # 6361: higher utility
 #print(np.sum(selectionProbability["Utility Difference"] < 0))   # 4928: lower utility
 #print(np.sum(selectionProbability["Utility Difference"] == 0))  # 1723: Equal utility 
 
 fig, axes = plt.subplots(nrows=1, ncols=2)
 
-sns.histplot(data=selectionProbability, x="Utility Difference", bins=10, ax=axes[0])
+# sns.regplot(modelBehaviorAversion_High, x="Outcome Variance Difference", y="Chosen", scatter=False, label="B=100", color="orange", ax=axes[0])
+seeking = participantAversion[participantAversion['Risk Aversion Coefficient'] > 0]["Id"]
+averse = participantAversion[participantAversion['Risk Aversion Coefficient'] < 0]["Id"]
+
+
+low = selectionProbability[selectionProbability["Id"].isin(averse)]
+high = selectionProbability[selectionProbability["Id"].isin(seeking)]
+
+sns.regplot(data=high, x="Variance Difference", y="Chosen", scatter=False, ax=axes[0], color="Blue", label="Risk Averse Participants")
+high["Variance Difference"] = high["Variance Difference"].round(1)
+groups = high.groupby("Variance Difference").mean()
+sns.scatterplot(data=groups, x="Variance Difference", y="Chosen", color="Blue", ax=axes[0])
+
+sns.regplot(data=low, x="Variance Difference", y="Chosen", scatter=False, ax=axes[0], color="Orange", label="Risk Seeking Participants")
+low["Variance Difference"] = low["Variance Difference"].round(1)
+groups = low.groupby("Variance Difference").mean()
+sns.scatterplot(data=groups, x="Variance Difference", y="Chosen", color="Orange", ax=axes[0])
+
+axes[0].set_ylabel("Probability of Selection", fontsize = 14)
+axes[0].set_xlabel("Outcome Variance Difference (Chosen - Unchosen)", fontsize = 14)
+axes[0].set_title("Participant Selection by Outcome Variance Difference", fontsize = 16)
+
+"""sns.histplot(data=selectionProbability, x="Utility Difference", bins=10, ax=axes[0])
 group = selectionProbability.groupby("Utility Difference")["Chosen"].mean()
 xd = group.index.values.tolist()
 yd = group.values.tolist()
 
 axes[0].set_ylabel("Count of Participant Choices", fontsize = 14)
 axes[0].set_xlabel("Utility Difference (Chosen - Unchosen)", fontsize = 14)
-axes[0].set_title(" Participant Choices by Utility Difference", fontsize = 16)
+axes[0].set_title(" Participant Choices by Utility Difference", fontsize = 16)"""
 
 splitAversion = pd.read_pickle("./fitAversion.pkl")
 splitAversion = splitAversion.reset_index()
@@ -99,6 +131,8 @@ sns.barplot(data=splitAversion, x="Model", y="Likelihood", order=order,errorbar=
 axes[1].set_ylabel("Log Likelihood", fontsize = 14)
 axes[1].set_xlabel("Model and Data Split", fontsize = 14)
 axes[1].set_title("Log Likelihood by Model and Data Split", fontsize = 16)
+
+splitAversion.to_pickle("../stats/participantAversion.pkl")
 
 plt.show()
 
@@ -134,6 +168,8 @@ CPT_60_Likelihoods = splitAversion[splitAversion["Split"] == 60]
 CPT_60_Likelihoods = CPT_60_Likelihoods["Likelihood"]
 res = tukey_hsd(CPT_60_Likelihoods, CPT_100_Likelihoods)
 print(res)
+
+
 
 """
 Another statistical test can be done using Wilks' lambda to compare the relationship between individual participants fit coefficients based on the split, which shows no statistical significance between individual participants λ parameters based on the split (df=325.9, F=0.1375, p=1.0). 

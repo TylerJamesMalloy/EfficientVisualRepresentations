@@ -89,78 +89,73 @@ print(r) # (statistic=0.3848826323868424, pvalue=0.30637763494591747)
 axes[1].text(0.05, 0.8, "R=0.38", transform=axes[1].transAxes, fontsize=12)
 axes[1].text(0.05, 0.75, "P=0.30", transform=axes[1].transAxes, fontsize=12)
 
-splitChange = pd.read_pickle(".\splitChange.pkl")
-splitChange = splitChange.reset_index()
-splitChange.loc[splitChange['Split'] == 80, 'Model'] = "Utility 60"
-splitChange.loc[splitChange['Split'] == 60, 'Model'] = "Utility 80"
-splitChange.loc[splitChange['Split'] == 40, 'Model'] = "Utility 40"
+fitChange = pd.read_pickle("./fitChange.pkl")
+fitChange = fitChange.reset_index()
+fitChange.loc[fitChange['Split'] == 80, 'Model'] = "Utility 60"
+fitChange.loc[fitChange['Split'] == 60, 'Model'] = "Utility 80"
+fitChange.loc[fitChange['Split'] == 40, 'Model'] = "Utility 40"
 
-print(splitChange['Split'].unique())
+#fitChange = fitChange[fitChange["Id"].isin(good)]
 
-Utility = splitChange[splitChange['Model'] == "Utility"]
+print(fitChange['Split'].unique())
+
+Utility = fitChange[fitChange['Model'] == "Utility"]
 print(Utility)
 import scipy.stats as stats
 
-result = stats.f_oneway(splitChange['Likelihood'][splitChange['Model'] == "Utility"],
-                        splitChange['Likelihood'][splitChange['Model'] == "Utility 80"],
-                        splitChange['Likelihood'][splitChange['Model'] == "Utility 60"],
-                        splitChange['Likelihood'][splitChange['Model'] == "Utility 40"],
-                        splitChange['Likelihood'][splitChange['Model'] == "Visual"])
-
-print(result)
-assert(False)
+result = stats.f_oneway(fitChange['Likelihood'][fitChange['Model'] == "Utility"],
+                        fitChange['Likelihood'][fitChange['Model'] == "Utility 80"],
+                        fitChange['Likelihood'][fitChange['Model'] == "Utility 60"],
+                        fitChange['Likelihood'][fitChange['Model'] == "Utility 40"],
+                        fitChange['Likelihood'][fitChange['Model'] == "Visual"])
 
 
 
 
-assert(False)
+fitChange.loc[fitChange['Split'] == 80, 'Model'] = "Utility 80"
+fitChange.loc[fitChange['Split'] == 60, 'Model'] = "Utility 60"
+fitChange.loc[fitChange['Split'] == 40, 'Model'] = "Utility 40"
 
-order = ["Visual", "Utility 40", "Utility 60", "Utility 80", "Utility"]
-
-splitChange.loc[splitChange['Split'] == 80, 'Model'] = "Utility 60"
-splitChange.loc[splitChange['Split'] == 60, 'Model'] = "Utility 80"
-splitChange.loc[splitChange['Split'] == 40, 'Model'] = "Utility 40"
-
-Utility_100_Likelihoods = splitChange[splitChange["Model"] == "Utility"]
+Utility_100_Likelihoods = fitChange[fitChange["Model"] == "Utility"]
 Utility_100_Likelihoods = Utility_100_Likelihoods[Utility_100_Likelihoods["Split"] == 100]
 Utility_100_Likelihoods = Utility_100_Likelihoods["Likelihood"]
 
-Visual_Likelihoods = splitChange[splitChange["Model"] == "Visual"]
+Visual_Likelihoods = fitChange[fitChange["Model"] == "Visual"]
 Visual_Likelihoods = Visual_Likelihoods["Likelihood"]
-
-
 
 
 from scipy.stats import tukey_hsd
 res = tukey_hsd(Utility_100_Likelihoods, Visual_Likelihoods)
 print(res)
 
-#print(splitChange["Likelihood"].min())
-#print(splitChange["Likelihood"].max())
-splitChange = splitChange[splitChange["Likelihood"] < 1.1]
-Utility_80_Likelihoods = splitChange[splitChange["Model"] == "Utility 80"]
+#print(fitChange["Likelihood"].min())
+print(fitChange["Likelihood"].max())
+fitChange = fitChange[fitChange["Likelihood"] < 1.1]
+Utility_80_Likelihoods = fitChange[fitChange["Model"] == "Utility 80"]
 Utility_80_Likelihoods = Utility_80_Likelihoods["Likelihood"]
 res = tukey_hsd(Utility_100_Likelihoods, Utility_80_Likelihoods)
 print(res)
 
-Utility_60_Likelihoods = splitChange[splitChange["Model"] == "Utility 60"]
+Utility_60_Likelihoods = fitChange[fitChange["Model"] == "Utility 60"]
 Utility_60_Likelihoods = Utility_60_Likelihoods["Likelihood"]
 res = tukey_hsd(Utility_100_Likelihoods, Utility_60_Likelihoods)
 print(res)
 
-Utility_40_Likelihoods = splitChange[splitChange["Model"] == "Utility 40"]
+Utility_40_Likelihoods = fitChange[fitChange["Model"] == "Utility 40"]
 Utility_40_Likelihoods = Utility_40_Likelihoods["Likelihood"]
 res = tukey_hsd(Utility_100_Likelihoods, Utility_40_Likelihoods)
 print(res)
 
+fitChange['Likelihood'] = 1 - np.log(1 - fitChange['Likelihood'])
 
+order = ["Visual", "Utility 40", "Utility 60", "Utility 80", "Utility"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
-sns.barplot(data=splitChange, x="Model", y="Likelihood", errorbar=('ci', 90), order=order, hue="Split", palette=palette, ax=axes[2])
-axes[2].set_ylim(0.7, 0.8)
+sns.barplot(data=fitChange, x="Model", y="Likelihood", errorbar=('ci', 90), order=order, hue="Split", palette=palette, ax=axes[2])
+axes[2].set_ylim(2, 2.75)
 
 axes[0].set_title("Detection Probability by Utility Difference", fontsize=14)
 axes[1].set_title("Detection Probability by Visual Difference", fontsize=14)
-axes[2].set_title("Likelihood by Model and Data Split", fontsize=14)
+axes[2].set_title("Log Likelihood by Model and Data Split", fontsize=14)
 
 axes[0].set_ylabel("Detection Probability", fontsize=12)
 axes[1].set_ylabel("Detection Probability", fontsize=12)
@@ -169,5 +164,7 @@ axes[2].set_ylabel("Log Likelihood", fontsize=12)
 axes[0].set_xlabel("Utility Difference", fontsize=12)
 axes[1].set_xlabel("Visual Difference", fontsize=12)
 axes[2].set_xlabel("Log Likelihood", fontsize=12)
+
+#fitChange.to_pickle("../stats/participantChange.pkl")
 
 plt.show()

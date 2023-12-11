@@ -29,7 +29,13 @@ fitEquivalence = fitEquivalence.reset_index()
 fitEquivalence.loc[fitEquivalence['Split'] == 80, 'Model'] = "Utility 40"
 fitEquivalence.loc[fitEquivalence['Split'] == 60, 'Model'] = "Utility 60"
 fitEquivalence.loc[fitEquivalence['Split'] == 40, 'Model'] = "Utility 80"
-fitEquivalence["Likelihood"] = fitEquivalence["Likelihood"] / 10
+
+fitEquivalence.loc[fitEquivalence['Model'] == "Utility 40", 'Likelihood'] = np.log(fitEquivalence.loc[fitEquivalence['Model'] == "Utility 40", 'Likelihood'])
+fitEquivalence.loc[fitEquivalence['Model'] == "Utility 60", 'Likelihood'] = np.log(fitEquivalence.loc[fitEquivalence['Model'] == "Utility 60", 'Likelihood'])
+fitEquivalence.loc[fitEquivalence['Model'] == "Utility 80", 'Likelihood'] = np.log(fitEquivalence.loc[fitEquivalence['Model'] == "Utility 80", 'Likelihood'])
+fitEquivalence.loc[fitEquivalence['Model'] == "Utility", 'Likelihood'] = np.log(fitEquivalence.loc[fitEquivalence['Model'] == "Utility", 'Likelihood'])
+
+#fitEquivalence["Likelihood"] = np.log(fitEquivalence["Likelihood"])
 
 order = ["Visual", "Utility 40", "Utility 60", "Utility 80", "Utility"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
@@ -56,6 +62,8 @@ res = stats.tukey_hsd(fitEquivalence['Likelihood'][fitEquivalence['Model'] == "U
                         fitEquivalence['Likelihood'][fitEquivalence['Model'] == "Utility 40"],
                         fitEquivalence['Likelihood'][fitEquivalence['Model'] == "Visual"])
 print(res)
+
+#fitEquivalence.to_pickle("../stats/participantEquivalence.pkl")
 
 """
 PearsonRResult(statistic=0.3596496949735051, pvalue=0.18795346210607378)
