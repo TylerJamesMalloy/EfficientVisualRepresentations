@@ -49,7 +49,7 @@ for id in ids:
 
 
 grouped = changeDetection.groupby(['Id']).mean()["Detected"]
-grouped = grouped[grouped > 0.55]
+grouped = grouped[grouped > 0.65]
 good = grouped.keys().tolist()
 changeDetection = changeDetection[changeDetection["Id"].isin(good)]
 
@@ -69,8 +69,8 @@ sns.regplot(data=regData, x="Utility Difference", y="Detection Probability", ax=
 
 r = pearsonr(regData["Utility Difference"], regData["Detection Probability"])
 print(r) # (statistic=0.87, pvalue=1.0E-5)
-axes[0].text(0.05, 0.8, "R=0.87", transform=axes[0].transAxes, fontsize=12)
-axes[0].text(0.05, 0.75, "P=1.0E-5", transform=axes[0].transAxes, fontsize=12)
+#axes[0].text(0.05, 0.8, "R=0.87", transform=axes[0].transAxes, fontsize=12)
+#axes[0].text(0.05, 0.75, "P=1.0E-5", transform=axes[0].transAxes, fontsize=12)
 
 grouped = changeDetection.groupby(['Visual Difference']).mean()["Detected"]
 
@@ -86,8 +86,8 @@ sns.regplot(data=regData, x="Visual Difference", y="Detection Probability", ax=a
 
 r = pearsonr(regData["Visual Difference"], regData["Detection Probability"])
 print(r) # (statistic=0.3848826323868424, pvalue=0.30637763494591747)
-axes[1].text(0.05, 0.8, "R=0.38", transform=axes[1].transAxes, fontsize=12)
-axes[1].text(0.05, 0.75, "P=0.30", transform=axes[1].transAxes, fontsize=12)
+#axes[1].text(0.05, 0.8, "R=0.38", transform=axes[1].transAxes, fontsize=12)
+#axes[1].text(0.05, 0.75, "P=0.30", transform=axes[1].transAxes, fontsize=12)
 
 fitChange = pd.read_pickle("./fitChange.pkl")
 fitChange = fitChange.reset_index()
@@ -146,12 +146,13 @@ Utility_40_Likelihoods = Utility_40_Likelihoods["Likelihood"]
 res = tukey_hsd(Utility_100_Likelihoods, Utility_40_Likelihoods)
 print(res)
 
-fitChange['Likelihood'] = 1 - np.log(1 - fitChange['Likelihood'])
+print(fitChange['Likelihood'].mean())
+fitChange['Likelihood'] = -np.log(1 - fitChange['Likelihood'])
 
 order = ["Visual", "Utility 40", "Utility 60", "Utility 80", "Utility"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
 sns.barplot(data=fitChange, x="Model", y="Likelihood", errorbar=('ci', 90), order=order, hue="Split", palette=palette, ax=axes[2])
-axes[2].set_ylim(2, 2.75)
+#axes[2].set_ylim(2, 2.75)
 
 axes[0].set_title("Detection Probability by Utility Difference", fontsize=14)
 axes[1].set_title("Detection Probability by Visual Difference", fontsize=14)

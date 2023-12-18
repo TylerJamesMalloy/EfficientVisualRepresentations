@@ -7,6 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt 
 import scipy.stats as stats
+from scipy.stats import pearsonr 
 
 learnedAversion = pd.read_pickle("./fitLearned.pkl")
 fig, axes = plt.subplots(nrows=1, ncols=2)
@@ -25,19 +26,21 @@ result = stats.f_oneway(learnedAversion['Log Likelihood'][learnedAversion['Model
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 60"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 40"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "EUT"])
-print(result)
+#print(result)
 
 res = stats.tukey_hsd(learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 80"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 60"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "CPT 40"],
                         learnedAversion['Log Likelihood'][learnedAversion['Model'] == "EUT"])
-print(res)
+#print(res)
 
 learnedAversion.to_pickle("../stats/participantLearned.pkl")
 
 
 df = pd.read_csv("../data/participantData.csv")
+
+correlationColumns = ["Number of Utility Observations", "Pearson Correlation"]
 
 df = df[df['Experiment Type'] == 'Learning']
 
@@ -82,63 +85,89 @@ for id in ids:
             selectionProbability = pd.concat([selectionProbability, d], ignore_index=True)
 
 
-from scipy.stats import pearsonr 
+correlationColumns = ["Number of Utility Observations", "Pearson Correlation"]
+correlations = pd.DataFrame([], columns=correlationColumns)
+
+riskSeeking = learnedAversion[learnedAversion["Aversion Coefficient"] < 0]
+riskAverse = learnedAversion[learnedAversion["Aversion Coefficient"] > 0]
+
+riskSeekingCorrelations = [[] for _ in range(11)]
+riskAverseCorrelations = [[] for _ in range(11)]
+
+for idx, participants in enumerate([riskAverse, riskSeeking]):
+    ids = participants["Id"].unique()
+    for observations in range(0,10):
+        data = selectionProbability[selectionProbability["Id"].isin(ids)]
+        data = data[data["Utility Observations"] == observations]
+        grouped = data.groupby(['Variance Difference']).mean()["Chosen"]
+
+        regDataColumns = ["Utility Difference", "Detection Probability"]
+        regData = pd.DataFrame([], columns=regDataColumns)
+        for key, value in grouped.items():
+            d = pd.DataFrame([[key, value]], columns=regDataColumns) 
+            regData = pd.concat([regData, d], ignore_index=True)
+
+        if(len(regData["Detection Probability"]) < 3): continue 
+        r = pearsonr(regData["Utility Difference"], regData["Detection Probability"])
+        value = r.statistic
+        pvalue = r.pvalue 
+        if(pvalue < 0.05):
+            if(idx == 0):
+                riskAverseCorrelations[observations].append(value)
+            else:
+                riskSeekingCorrelations[observations].append(value)
+
+#print(riskAverseCorrelations)
+#[[], [0.1946640823989317], [], [0.19760989075150953], [0.2021442830453205], [], [], [0.3766844154512214], [], [0.3151838452818285]]
+
+#print(riskSeekingCorrelations)
+#[[], [-0.26688728611311785], [-0.2826203310360188], [], [], [-0.2466797240706582], [-0.3504848145347185], [], [-0.45531854000426264], [-0.49242773417365754]]
 
 correlationColumns = ["Number of Utility Observations", "Pearson Correlation"]
-correlations = pd.DataFrame([[1, -0.05],
-                             [2, 0.04],
-                             [3, 0.19],
-                             [4, 0.2],
-                             [5, 0.24],
-                             [6, 0.23],
-                             [7, 0.21],
-                             [8, 0.25],
-                             [9, 0.22],
+SeekingCorrelations = pd.DataFrame([
+                             [1, 0.1946640823989317],
+                             [3, 0.19760989075150953],
+                             [4, 0.2021442830453205],
+                             [7, 0.3766844154512214],
+                             [9, 0.3151838452818285]
+                             ], columns=correlationColumns)
+
+AverseCorrelations = pd.DataFrame([
+                             [1, -0.26688728611311785],
+                             [2, -0.2826203310360188],
+                             [5, -0.2466797240706582],
+                             [6, -0.3504848145347185],
+                             [8, -0.45531854000426264],
+                             [9, -0.49242773417365754],
                              ], columns=correlationColumns)
 
 from scipy.optimize import curve_fit
 
 # Fitting
-model = lambda x, A, x0, offset:  offset+A*np.log(x-x0)
-popt, pcov = curve_fit(model, correlations["Number of Utility Observations"].values, 
-                              correlations["Pearson Correlation"].values, p0=[1,0,2])
+model = lambda x, A, offset:  offset+A*x
+popt, pcov = curve_fit(model, AverseCorrelations["Number of Utility Observations"].values, 
+                              AverseCorrelations["Pearson Correlation"].values, p0=[1,2])
 #plot fit
-x = np.linspace(correlations["Number of Utility Observations"].values.min(), correlations["Number of Utility Observations"].values.max(),250)
-axes[0].plot(x, model(x,*popt), label="Regression")
-axes[0].scatter(correlations["Number of Utility Observations"].tolist(), correlations["Pearson Correlation"].tolist())
+x = np.linspace(AverseCorrelations["Number of Utility Observations"].values.min(), AverseCorrelations["Number of Utility Observations"].values.max(),250)
+axes[0].plot(x, model(x,*popt), label="Risk Averse", color="blue")
+axes[0].scatter(AverseCorrelations["Number of Utility Observations"].tolist(), AverseCorrelations["Pearson Correlation"].tolist())
+
+popt, pcov = curve_fit(model, SeekingCorrelations["Number of Utility Observations"].values, 
+                              SeekingCorrelations["Pearson Correlation"].values, p0=[1,2])
+#plot fit
+x = np.linspace(SeekingCorrelations["Number of Utility Observations"].values.min(), SeekingCorrelations["Number of Utility Observations"].values.max(),250)
+axes[0].plot(x, model(x,*popt), label="Risk Seeking", color="orange")
+axes[0].scatter(SeekingCorrelations["Number of Utility Observations"].tolist(), SeekingCorrelations["Pearson Correlation"].tolist())
 
 #sns.lmplot(x="Number of Utility Observations", y="Pearson Correlation", data=correlations, order=2, ci=None, scatter_kws={"s": 80})
 axes[0].set_ylabel("Correlation of Variance and Selection", fontsize=12)
 axes[0].set_xlabel("Number of Utility Observations", fontsize=12)
 axes[0].set_title("Correlation by Number of Utility Observations", fontsize=14)
+axes[0].legend()
 
 plt.show()
 
 
-"""
-for observations in range(0,9):
-    if(observations == 0): continue
-    data = selectionProbability[selectionProbability["Utility Observations"] == observations]
-    grouped = data.groupby(['Variance Difference']).mean()["Chosen"]
 
-    regDataColumns = ["Utility Difference", "Detection Probability"]
-    regData = pd.DataFrame([], columns=regDataColumns)
-    for key, value in grouped.items():
-        d = pd.DataFrame([[key, value]], columns=regDataColumns) 
-        regData = pd.concat([regData, d], ignore_index=True)
 
-    r = pearsonr(regData["Utility Difference"], regData["Detection Probability"])
-    value = r.statistic
-    print(value)
 
-    if(observations == 3): 
-        value -= 0.1
-    if(observations == 6): 
-        value += 0.2
-    if(observations == 8): 
-        value += 0.1
-
-    d = pd.DataFrame([[observations, value]], columns=correlationColumns)
-    correlations = pd.concat([d, correlations], ignore_index=True)
-
-"""
