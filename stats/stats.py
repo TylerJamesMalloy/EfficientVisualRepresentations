@@ -13,7 +13,11 @@ participantLearned = pd.read_pickle("./participantLearned.pkl") # Experiment 2 d
 participantEquivalence = pd.read_pickle("./participantEquivalence.pkl") # Experiment 2 change detection
 
 participantEquivalence.rename(columns={'Likelihood': 'Log Likelihood'}, inplace=True)
-participantEquivalence.to_pickle("./participantEquivalence.pkl")
+participantAversion.rename(columns={'Likelihood': 'Log Likelihood'}, inplace=True)
+participantChange.rename(columns={'Likelihood': 'Log Likelihood'}, inplace=True)
+#participantEquivalence.to_pickle("./participantEquivalence.pkl")
+
+print(participantAversion)
 
 aversion = participantAversion.groupby(["Model", "Split"])["Log Likelihood"]
 change = participantChange.groupby(["Model", "Split"])["Log Likelihood"]
@@ -34,6 +38,18 @@ aversion_loss_var = aversion.var().to_numpy()
 change_loss_var = change.var().to_numpy()
 learned_loss_var = learned.var().to_numpy()
 equivalence_loss_var = equivalence.var().to_numpy()
+
+# Experiment 1
+# CPT    :  1.75, 1.5, 1.3, 1.3
+# Model  :  1.8 , 1.8, 1.8, 1.8
+# Utility:  1.6 , 1.5, 1.5, 1.5 
+# Model  :  1.9 , 1.9, 1.9, 1.9 
+
+# Experiment 2
+# CPT    :  1.2, 0.9, 0.75, 0.6
+# Model  :  1.0, 1.0, 1.0 , 1.0 
+# Utility:  2.6, 2.5, 2.4 , 1.6 
+# Model  :  3.0, 3.0, 3.0 , 3.0 
 
 obs = 200
 paics = []

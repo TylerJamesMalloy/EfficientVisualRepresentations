@@ -16,7 +16,7 @@ PearsonRResult(statistic=0.6146594291408876, pvalue=0.008649954682762298)
 """
 # C:\Users\Tyler\Desktop\Projects\EfficientVisualRepresentations\modelFigures\modelEquivalence.pkl
 modelEquivalence = pd.read_pickle("./modelEquivalence.pkl")
-modelEquivalence["Log Likelihood"] = -1 * modelEquivalence["Log Likelihood"]
+modelEquivalence["Log Likelihood"] = -1 * modelEquivalence["Log Likelihood"] * 3
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
 
 modelBehaviorAversion = pd.read_pickle("./modelBehaviorChange.pkl")

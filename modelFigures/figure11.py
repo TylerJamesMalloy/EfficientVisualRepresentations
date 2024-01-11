@@ -8,7 +8,6 @@ fig, axes = plt.subplots(nrows=1, ncols=3)
 
 
 modelFitAversion = pd.read_pickle("./modelFitChange.pkl")
-modelFitAversion["Log Likelihood"] = -1 * modelFitAversion["Log Likelihood"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
 
 modelBehaviorAversion = pd.read_pickle("./modelBehaviorChange.pkl")

@@ -8,7 +8,6 @@ fig, axes = plt.subplots(nrows=1, ncols=2)
 
 
 modelFitAversion = pd.read_pickle("./modelFitAversion.pkl")
-modelFitAversion["Log Likelihood"] = -1 * modelFitAversion["Log Likelihood"]
 palette = sns.cubehelix_palette(start=.5, rot=-.5, as_cmap=True, n_colors=4) 
 
 sns.barplot(modelFitAversion, x="Model", y="Log Likelihood", hue="Split", palette=palette, ax=axes[1])
